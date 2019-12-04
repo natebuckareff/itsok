@@ -1,0 +1,23 @@
+{
+    "name": "itsok",
+    "version": "0.0.1",
+    "license": "MIT",
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
+    "files": [
+        "lib",
+        "src"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/natebuckareff/itsok"
+    },
+    "devDependencies": {
+        "@types/node": "^12.12.14",
+        "typescript": "^3.7.2"
+    },
+    "scripts": {
+        "build": "tsc",
+        "prepublishOnly": "yarn build"
+    }
+}
