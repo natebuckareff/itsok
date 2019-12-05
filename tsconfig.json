@@ -1,17 +1,16 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es6",
         "module": "commonjs",
         "declaration": true,
         "outDir": "./lib",
         "rootDir": "./src",
         "downlevelIteration": true,
         "strict": true,
-        // "noUnusedLocals": true,
-        // "noUnusedParameters": true,
-        // "noImplicitReturns": true,
-        // "noFallthroughCasesInSwitch": true,
-        // "allowSyntheticDefaultImports": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true
     },

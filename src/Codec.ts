@@ -1,3 +1,4 @@
+import { CodecReference } from './SchemaDocument';
 import { Result } from './Result';
 
 export class CodecError extends Error {
@@ -14,6 +15,10 @@ export class Codec<I, O> {
         public readonly parse: (i: I) => CodecResult<O>,
         public readonly serialize: (o: O) => CodecResult<I>,
     ) {}
+
+    schema(): CodecReference {
+        throw new Error('Not implemented');
+    }
 }
 
 export type CodecLike = Codec<any, any>;

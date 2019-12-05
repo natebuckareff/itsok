@@ -14,9 +14,12 @@
     },
     "devDependencies": {
         "@types/node": "^12.12.14",
-        "typescript": "^3.7.2"
+        "nodemon": "^2.0.1",
+        "ts-node": "^8.5.4",
+        "typescript": "^3.7.3"
     },
     "scripts": {
+        "dev": "nodemon --exec ts-node ./src/test.ts",
         "build": "tsc",
         "prepublishOnly": "yarn build"
     }

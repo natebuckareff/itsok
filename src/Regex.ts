@@ -1,10 +1,12 @@
-import { Codec, Alias } from './Codec';
+import { Alias } from './Codec';
+import { GenericCodec } from './GenericCodec';
 import { Ok, Err } from './Result';
 import { String } from './Primitive';
 
 export function Regex(re: RegExp) {
-    return new Codec<unknown, string>(
+    return new GenericCodec<unknown, string, [string]>(
         `Regex(${re.source})`,
+        [re.source],
         u => {
             return String.parse(u).pipe(s => {
                 if (!re.test(s)) {

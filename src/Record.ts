@@ -1,23 +1,22 @@
 import { Codec, CodecLike, CodecResult } from './Codec';
+import { CodecReference } from './SchemaDocument';
 import { Result, Ok } from './Result';
 
-export type RecordSpec = { [key: string]: CodecLike };
+export type RecordFields = { [key: string]: CodecLike };
 
-export type RecordOutput<S extends RecordSpec> = {
+export type RecordOutput<S extends RecordFields> = {
     [K in keyof S]: S[K] extends Codec<infer I, any> ? I : never;
 };
 
-export type RecordCodec<S extends RecordSpec> = Codec<unknown, RecordOutput<S>>;
-
-function serdes<S extends RecordSpec, I, O>(
-    spec: S,
+function serdes<F extends RecordFields, I, O>(
+    fields: F,
     input: I,
     fn: (codec: CodecLike, x: any) => CodecResult<any>,
 ): Result<O, Error> {
     let cow: O = input as any;
     for (const k in cow) {
         const v = cow[k];
-        const r = fn(spec[k], v);
+        const r = fn(fields[k], v);
         if (r.isError) {
             return r;
         }
@@ -31,9 +30,39 @@ function serdes<S extends RecordSpec, I, O>(
     return Ok(cow);
 }
 
-function Record<S extends RecordSpec>(spec: S): RecordCodec<S>;
-function Record<S extends RecordSpec>(name: string, spec: S): RecordCodec<S>;
-function Record<S extends RecordSpec>(...args: any[]): RecordCodec<S> {
+export class RecordCodec<O> extends Codec<unknown, O> {
+    constructor(
+        public readonly name: string,
+        public readonly fields: RecordFields,
+        public readonly parse: (i: unknown) => CodecResult<O>,
+        public readonly serialize: (o: O) => CodecResult<unknown>,
+    ) {
+        super(name, parse, serialize);
+    }
+
+    schema() {
+        const ref: CodecReference = {
+            type: 'CodecReference',
+            name: 'Record',
+            fields: {},
+        };
+        for (const k in this.fields) {
+            ref.fields[k] = this.fields[k].schema();
+        }
+        return ref;
+    }
+}
+
+function Record<F extends RecordFields>(
+    fields: F,
+): RecordCodec<RecordOutput<F>>;
+
+function Record<F extends RecordFields>(
+    name: string,
+    fields: F,
+): RecordCodec<RecordOutput<F>>;
+
+function Record<S extends RecordFields>(...args: any[]) {
     let name: string;
     let spec: S;
 
@@ -45,8 +74,9 @@ function Record<S extends RecordSpec>(...args: any[]): RecordCodec<S> {
         spec = args[0];
     }
 
-    return new Codec<unknown, RecordOutput<S>>(
+    return new RecordCodec<RecordOutput<S>>(
         name,
+        spec,
         i => serdes(spec, i, (c, x) => c.parse(x)),
         o => serdes(spec, o, (c, x) => c.parse(x)),
     );
