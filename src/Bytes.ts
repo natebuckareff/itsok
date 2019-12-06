@@ -1,6 +1,7 @@
 import { GenericCodec } from './GenericCodec';
 import { Hex } from './Regex';
-import { Try } from './Result';
+import { PrimitiveCodec } from './Primitive';
+import { Try, Ok, Err } from './Result';
 
 export function StringBytes(encoding: BufferEncoding) {
     return new GenericCodec<string, Buffer, [BufferEncoding]>(
@@ -10,3 +11,14 @@ export function StringBytes(encoding: BufferEncoding) {
         o => Try(() => o.toString(encoding)),
     );
 }
+
+const _Buffer = new PrimitiveCodec<unknown, Buffer>(
+    'Buffer',
+    i => {
+        return Buffer.isBuffer(i)
+            ? Ok(i as Buffer)
+            : Err(new Error('Expected Buffer'));
+    },
+    Ok,
+);
+export { _Buffer as Buffer };

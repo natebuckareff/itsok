@@ -2,11 +2,11 @@ import { Codec, CodecResult } from './Codec';
 import { CodecReference } from './SchemaDocument';
 import { Ok, Err } from './Result';
 
-export class PrimitiveCodec<O> extends Codec<unknown, O> {
+export class PrimitiveCodec<I, O> extends Codec<I, O> {
     constructor(
         public readonly name: string,
-        public readonly parse: (i: unknown) => CodecResult<O>,
-        public readonly serialize: (o: O) => CodecResult<unknown>,
+        public readonly parse: (i: I) => CodecResult<O>,
+        public readonly serialize: (o: O) => CodecResult<I>,
     ) {
         super(name, parse, serialize);
     }
@@ -20,7 +20,7 @@ export class PrimitiveCodec<O> extends Codec<unknown, O> {
 }
 
 export function Is<O>(name: string, value: O) {
-    return new PrimitiveCodec<O>(
+    return new PrimitiveCodec<unknown, O>(
         name,
         u => {
             return Object.is(u, value)
@@ -32,7 +32,7 @@ export function Is<O>(name: string, value: O) {
 }
 
 export function TypeOf<O>(name: string, type: string) {
-    return new PrimitiveCodec<O>(
+    return new PrimitiveCodec<unknown, O>(
         name,
         u => {
             return typeof u === type
@@ -43,7 +43,7 @@ export function TypeOf<O>(name: string, type: string) {
     );
 }
 
-export const Any = new PrimitiveCodec<any>('Any', Ok, Ok);
+export const Any = new PrimitiveCodec<unknown, any>('Any', Ok, Ok);
 export const Null = Is('Null', null);
 export const Undefined = TypeOf<undefined>('Undefined', 'undefined');
 export const Boolean = TypeOf<boolean>('Boolean', 'boolean');
