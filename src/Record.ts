@@ -5,7 +5,7 @@ import { Result, Ok } from './Result';
 export type RecordFields = { [key: string]: CodecLike };
 
 export type RecordOutput<S extends RecordFields> = {
-    [K in keyof S]: S[K] extends Codec<infer I, any> ? I : never;
+    [K in keyof S]: S[K] extends Codec<any, infer O> ? O : never;
 };
 
 function serdes<F extends RecordFields, I, O>(
