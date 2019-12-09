@@ -1,16 +1,16 @@
-import { Record } from './Record';
-import { Number, String } from './Primitive';
 import { Array } from './Array';
-import { StringBytes } from './Bytes';
+import { Buffer } from './Bytes';
 import { CodecLike } from './Codec';
+import { Number, String } from './Primitive';
+import { Record } from './Record';
 
 const Point = (codec: CodecLike) => Array(codec);
 
 const User = Record({
-    id: Number,
+    id: String,
     username: String,
     tags: Array(String),
-    bin: StringBytes('base64'),
+    bin: Buffer('base64'),
     geo: Point(Number),
 });
 
