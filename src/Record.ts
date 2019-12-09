@@ -4,8 +4,8 @@ import { Result, Ok } from './Result';
 
 export type RecordFields = { [key: string]: CodecLike };
 
-export type RecordOutput<S extends RecordFields> = {
-    [K in keyof S]: S[K] extends Codec<any, infer O> ? O : never;
+export type RecordOutput<F extends RecordFields> = {
+    [K in keyof F]: F[K] extends Codec<any, infer O> ? O : never;
 };
 
 function serdes<F extends RecordFields, I, O>(
@@ -79,7 +79,7 @@ function Record<F extends RecordFields>(...args: any[]) {
         name,
         spec,
         i => serdes(spec, i, (c, x) => c.parse(x)),
-        o => serdes(spec, o, (c, x) => c.parse(x)),
+        o => serdes(spec, o, (c, x) => c.serialize(x)),
     );
 }
 
