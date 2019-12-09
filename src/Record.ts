@@ -30,10 +30,13 @@ function serdes<F extends RecordFields, I, O>(
     return Ok(cow);
 }
 
-export class RecordCodec<O> extends Codec<unknown, O> {
+export class RecordCodec<
+    F extends RecordFields,
+    O = RecordOutput<F>
+> extends Codec<unknown, O> {
     constructor(
         public readonly name: string,
-        public readonly fields: RecordFields,
+        public readonly fields: F,
         public readonly parse: (i: unknown) => CodecResult<O>,
         public readonly serialize: (o: O) => CodecResult<unknown>,
     ) {
@@ -53,18 +56,16 @@ export class RecordCodec<O> extends Codec<unknown, O> {
     }
 }
 
-function Record<F extends RecordFields>(
-    fields: F,
-): RecordCodec<RecordOutput<F>>;
+function Record<F extends RecordFields>(fields: F): RecordCodec<F>;
 
 function Record<F extends RecordFields>(
     name: string,
     fields: F,
-): RecordCodec<RecordOutput<F>>;
+): RecordCodec<F>;
 
-function Record<S extends RecordFields>(...args: any[]) {
+function Record<F extends RecordFields>(...args: any[]) {
     let name: string;
-    let spec: S;
+    let spec: F;
 
     if (typeof args[0] === 'string') {
         name = `Record(${args[0]})`;
@@ -74,7 +75,7 @@ function Record<S extends RecordFields>(...args: any[]) {
         spec = args[0];
     }
 
-    return new RecordCodec<RecordOutput<S>>(
+    return new RecordCodec<F>(
         name,
         spec,
         i => serdes(spec, i, (c, x) => c.parse(x)),
