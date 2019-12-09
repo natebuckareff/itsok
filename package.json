@@ -21,6 +21,7 @@
     "scripts": {
         "dev": "nodemon --exec ts-node ./src/test.ts",
         "build": "tsc",
-        "prepublishOnly": "yarn build"
+        "prepublishOnly": "yarn build",
+        "preinstall": "yarn build"
     }
 }
