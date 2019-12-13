@@ -10,3 +10,4 @@ export * from './Regex';
 export * from './Result';
 export * from './SchemaDocument';
 export * from './Time';
+export * from './codegen';

@@ -4,31 +4,39 @@
 
 export interface SchemaDocument {
     type: 'SchemaDocument';
-    definitions: CodecDefinition[];
+    definitions: Definition[];
 }
+
+export type Definition = CodecDefinition;
 
 export interface CodecDefinition {
     type: 'CodecDefinition';
     name: string;
-    definition: CodecReference;
+    reference: Reference;
 }
 
-export type CodecReference = GenericReference | RecordReference;
+export type Reference = CodecReference | FactoryReference;
 
-export interface GenericReference {
+export interface CodecReference {
     type: 'CodecReference';
     name: string;
-    parameters?: (CodecReference | Literal)[];
+}
+
+export type FactoryReference = GenericFactoryReference | RecordFactoryReference;
+
+export interface GenericFactoryReference {
+    type: 'GenericFactoryReference';
+    name: string;
+    args: Literal[];
+}
+
+export interface RecordFactoryReference {
+    type: 'RecordFactoryReference';
+    fields: { [field: string]: Reference };
 }
 
 export interface Literal {
     type: 'Literal';
     codec: string;
     value: any;
-}
-
-export interface RecordReference {
-    type: 'CodecReference';
-    name: 'Record';
-    fields: { [field: string]: CodecReference };
 }
