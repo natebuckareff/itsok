@@ -16,6 +16,10 @@ export class Codec<I, O> {
         public readonly serialize: (o: O) => CodecResult<I>,
     ) {}
 
+    display(): string {
+        return this.name;
+    }
+
     schema(): Reference {
         throw new Error('Not implemented');
     }

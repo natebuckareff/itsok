@@ -23,6 +23,22 @@ export class GenericCodec<I, O, P extends any[] = []> extends Codec<I, O> {
         super(name, parse, serialize);
     }
 
+    display() {
+        if (this.params.length === 0) {
+            return this.name;
+        } else {
+            const pnames = [];
+            for (const x of this.params) {
+                if (x instanceof Codec) {
+                    pnames.push(x.display());
+                } else {
+                    pnames.push(x + '');
+                }
+            }
+            return `${this.name}(${pnames.join(', ')})`;
+        }
+    }
+
     schema(): Reference {
         const ref: GenericFactoryReference = {
             type: 'GenericFactoryReference',

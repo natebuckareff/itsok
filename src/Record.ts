@@ -39,12 +39,16 @@ export class RecordCodec<
     O = RecordOutput<F>
 > extends Codec<unknown, O> {
     constructor(
-        public readonly name: string,
+        public readonly alias: string | null,
         public readonly fields: F,
         public readonly parse: (i: unknown) => CodecResult<O>,
         public readonly serialize: (o: O) => CodecResult<unknown>,
     ) {
-        super(name, parse, serialize);
+        super('Record', parse, serialize);
+    }
+
+    display() {
+        return this.alias ? `Record(${this.alias})` : 'Record';
     }
 
     schema() {
@@ -62,24 +66,24 @@ export class RecordCodec<
 function Record<F extends RecordFields>(fields: F): RecordCodec<F>;
 
 function Record<F extends RecordFields>(
-    name: string,
+    alias: string,
     fields: F,
 ): RecordCodec<F>;
 
 function Record<F extends RecordFields>(...args: any[]) {
-    let name: string;
+    let alias: string | null;
     let spec: F;
 
     if (typeof args[0] === 'string') {
-        name = `Record(${args[0]})`;
+        alias = args[0];
         spec = args[1];
     } else {
-        name = `Record`;
+        alias = null;
         spec = args[0];
     }
 
     return new RecordCodec<F>(
-        name,
+        alias,
         spec,
         i => serdes(spec, i, (c, x) => c.parse(x)),
         o => serdes(spec, o, (c, x) => c.serialize(x)),

@@ -28,7 +28,7 @@ function serdes<C extends CodecLike, I, O>(
 
 function _Array<C extends CodecLike>(codec: C) {
     return new GenericCodec<unknown, CodecOutput<C>[], [C]>(
-        `Array(${codec.name})`,
+        `Array`,
         [codec],
         i => {
             if (!Array.isArray(i)) {

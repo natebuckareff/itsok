@@ -5,7 +5,7 @@ import { String } from './Primitive';
 
 export function Regex(re: RegExp) {
     return new GenericCodec<unknown, string, [string]>(
-        `Regex(${re.source})`,
+        `Regex`,
         [re.source],
         u => {
             return String.parse(u).pipe(s => {
@@ -23,4 +23,6 @@ export function Regex(re: RegExp) {
     );
 }
 
-export const Hex = Alias('Regex.Hex', Regex(/^[a-zA-Z0-9]+$/));
+export namespace Regex {
+    export const Hex = Alias('Regex.Hex', Regex(/^[a-zA-Z0-9]+$/));
+}
