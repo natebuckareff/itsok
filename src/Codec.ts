@@ -1,4 +1,4 @@
-import { CodecReference } from './SchemaDocument';
+import { Reference } from './SchemaDocument';
 import { Result } from './Result';
 
 export class CodecError extends Error {
@@ -16,7 +16,7 @@ export class Codec<I, O> {
         public readonly serialize: (o: O) => CodecResult<I>,
     ) {}
 
-    schema(): CodecReference {
+    schema(): Reference {
         throw new Error('Not implemented');
     }
 }

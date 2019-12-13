@@ -27,7 +27,7 @@ export type FactoryReference = GenericFactoryReference | RecordFactoryReference;
 export interface GenericFactoryReference {
     type: 'GenericFactoryReference';
     name: string;
-    args: Literal[];
+    args: (Reference | Literal)[];
 }
 
 export interface RecordFactoryReference {

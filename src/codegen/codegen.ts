@@ -60,7 +60,15 @@ function* codegenGenericFactoryReference(
     ctx: Ctx,
 ): Iterable<string> {
     const name = resolveName(ref.name, ctx);
-    yield `${name}(${ref.args.map(x => JSON.stringify(x.value)).join(', ')})`;
+    yield `${name}(${ref.args
+        .map(x => {
+            if (x.type === 'Literal') {
+                return JSON.stringify(x.value);
+            } else {
+                return codegenReference(x, ctx);
+            }
+        })
+        .join(', ')})`;
 }
 
 function* codegenRecordFactoryReference(

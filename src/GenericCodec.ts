@@ -4,7 +4,7 @@
  */
 
 import { Codec, CodecResult } from './Codec';
-import { CodecReference } from './SchemaDocument';
+import { GenericFactoryReference, Reference } from './SchemaDocument';
 
 const LITERAL_CODECS: any = {
     null: 'Null',
@@ -23,20 +23,21 @@ export class GenericCodec<I, O, P extends any[] = []> extends Codec<I, O> {
         super(name, parse, serialize);
     }
 
-    schema(): CodecReference {
-        const ref: CodecReference = {
-            type: 'CodecReference',
+    schema(): Reference {
+        const ref: GenericFactoryReference = {
+            type: 'GenericFactoryReference',
             name: this.name,
+            args: [],
         };
         if (this.params.length > 0) {
-            ref.parameters = [];
+            ref.args = [];
             for (const param of this.params) {
                 if (param instanceof Codec) {
-                    ref.parameters.push(param.schema());
+                    ref.args.push(param.schema());
                 } else {
                     const codec = LITERAL_CODECS[typeof param];
                     if (codec !== undefined) {
-                        ref.parameters.push({
+                        ref.args.push({
                             type: 'Literal',
                             codec,
                             value: param,
