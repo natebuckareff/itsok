@@ -44,7 +44,7 @@ export class RecordCodec<
         public readonly parse: (i: unknown) => CodecResult<O>,
         public readonly serialize: (o: O) => CodecResult<unknown>,
     ) {
-        super('Record', parse, serialize);
+        super(alias || 'Record', parse, serialize);
     }
 
     display() {
