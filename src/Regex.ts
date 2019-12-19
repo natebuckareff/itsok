@@ -24,5 +24,11 @@ export function Regex(re: RegExp) {
 }
 
 export namespace Regex {
+    export const Float = Alias(
+        'Regex.Float',
+        Regex(/^[+-]?(([0-9]*\.[0-9]+)|([0-9]+(\.[0-9]*)?))(e[+-]?[0-9]+)?$/),
+    );
+
+    export const Integer = Alias('Regex.Integer', Regex(/^[+-]?[0-9]+$/));
     export const Hex = Alias('Regex.Hex', Regex(/^[a-zA-Z0-9]+$/));
 }

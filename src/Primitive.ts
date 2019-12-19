@@ -2,6 +2,12 @@ import { Codec, CodecResult } from './Codec';
 import { CodecReference } from './SchemaDocument';
 import { Ok, Err } from './Result';
 
+export class UnexpectedTypeError extends Error {
+    constructor(expected: string, actual: any) {
+        super(`Expected type ${expected}, got ${typeof actual}`);
+    }
+}
+
 export class PrimitiveCodec<I, O> extends Codec<I, O> {
     constructor(
         public readonly name: string,
@@ -37,7 +43,7 @@ export function TypeOf<O>(name: string, type: string) {
         u => {
             return typeof u === type
                 ? Ok(u as O)
-                : Err(new Error(`Expected type ${name}, got ${typeof u}`));
+                : Err(new UnexpectedTypeError(name, u));
         },
         Ok,
     );
@@ -47,6 +53,5 @@ export const Any = new PrimitiveCodec<unknown, any>('Any', Ok, Ok);
 export const Null = Is('Null', null);
 export const Undefined = TypeOf<undefined>('Undefined', 'undefined');
 export const Boolean = TypeOf<boolean>('Boolean', 'boolean');
-export const Number = TypeOf<number>('Number', 'number');
 export const String = TypeOf<string>('String', 'string');
 export const Symbol = TypeOf<symbol>('Symbol', 'symbol');
