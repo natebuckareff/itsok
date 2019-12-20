@@ -2,7 +2,7 @@ import { GenericCodec } from './GenericCodec';
 import { Regex } from './Regex';
 import { Try, Ok } from './Result';
 
-export function _Buffer(encoding: BufferEncoding) {
+function _Buffer(encoding: BufferEncoding) {
     return new GenericCodec<string | Buffer, Buffer, [BufferEncoding]>(
         `Buffer`,
         [encoding],
@@ -18,5 +18,4 @@ export function _Buffer(encoding: BufferEncoding) {
         o => Try(() => o.toString(encoding)),
     );
 }
-
 export { _Buffer as Buffer };
