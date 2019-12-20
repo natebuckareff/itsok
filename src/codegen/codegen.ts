@@ -10,7 +10,7 @@ export function codegenSchema(schema: Schema.SchemaDocument) {
     for (const x of schema.definitions) {
         body.push(
             ...wrap(
-                `const ${x.name} = `,
+                `export const ${x.name} = `,
                 [...codegenReference(x.reference, ctx)],
                 ';',
             ),
