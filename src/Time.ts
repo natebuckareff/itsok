@@ -1,5 +1,6 @@
+import { Number } from './Numeric';
 import { Ok, Try } from './Result';
-import { PrimitiveCodec, Number } from './Primitive';
+import { PrimitiveCodec } from './Primitive';
 
 export const UnixMilliseconds = new PrimitiveCodec<number, Date>(
     'UnixMilliseconds',
