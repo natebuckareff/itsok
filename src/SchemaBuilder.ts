@@ -5,12 +5,16 @@ export class SchemaBuilder {
     private defs = new Map<string, CodecLike>();
 
     register<C extends CodecLike>(codec: C) {
-        if (this.defs.has(codec.name)) {
-            throw new Error(
-                `Codec definition already exists for "${codec.name}"`,
-            );
+        const exists = this.defs.get(codec.name);
+        if (exists !== undefined) {
+            if (exists !== codec) {
+                throw new Error(
+                    `Codec definition already exists for "${codec.name}"`,
+                );
+            }
+        } else {
+            this.defs.set(codec.name, codec);
         }
-        this.defs.set(codec.name, codec);
     }
 
     static validateNoConflicts(a: SchemaBuilder, b: SchemaBuilder) {
