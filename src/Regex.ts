@@ -4,7 +4,7 @@ import { Ok, Err } from './Result';
 import { String } from './Primitive';
 
 export function Regex(re: RegExp) {
-    return new GenericCodec<unknown, string, [string]>(
+    return new GenericCodec<unknown, string, string, [string]>(
         `Regex`,
         [re.source],
         u => {

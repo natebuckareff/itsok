@@ -8,6 +8,10 @@ export type RecordOutput<F extends RecordFields> = {
     [K in keyof F]: F[K] extends Codec<any, infer O> ? O : never;
 };
 
+export type RecordSerialized<F extends RecordFields> = {
+    [K in keyof F]: F[K] extends Codec<any, any, infer S> ? S : never;
+};
+
 function serdes<F extends RecordFields, I, O>(
     fields: F,
     input: I,
@@ -36,13 +40,14 @@ function serdes<F extends RecordFields, I, O>(
 
 export class RecordCodec<
     F extends RecordFields,
-    O = RecordOutput<F>
-> extends Codec<unknown, O> {
+    O = RecordOutput<F>,
+    S = RecordSerialized<F>
+> extends Codec<unknown, O, S> {
     constructor(
         public readonly alias: string | null,
         public readonly fields: F,
         public readonly parse: (i: unknown) => CodecResult<O>,
-        public readonly serialize: (o: O) => CodecResult<unknown>,
+        public readonly serialize: (o: O) => CodecResult<S>,
     ) {
         super(alias || 'Record', parse, serialize);
     }

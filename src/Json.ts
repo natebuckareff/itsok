@@ -9,7 +9,7 @@ export interface JsonMap {
 
 export interface JsonArray extends Array<AnyJson> {}
 
-export const Json = new Codec<string, AnyJson>(
+export const Json = new Codec<string, AnyJson, AnyJson>(
     `Json`,
     i => Try(() => JSON.parse(i)),
     o => Try(() => JSON.stringify(o)),

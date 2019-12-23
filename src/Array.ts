@@ -1,6 +1,13 @@
-import { CodecResult, CodecLike, CodecOutput, CodecError } from './Codec';
 import { GenericCodec } from './GenericCodec';
 import { Ok, Err } from './Result';
+
+import {
+    CodecResult,
+    CodecLike,
+    CodecOutput,
+    CodecError,
+    CodecSerialized,
+} from './Codec';
 
 function serdes<C extends CodecLike, I, O>(
     codec: C,
@@ -27,7 +34,12 @@ function serdes<C extends CodecLike, I, O>(
 }
 
 function _Array<C extends CodecLike>(codec: C) {
-    return new GenericCodec<unknown, CodecOutput<C>[], [C]>(
+    return new GenericCodec<
+        unknown,
+        CodecOutput<C>[],
+        CodecSerialized<C>[],
+        [C]
+    >(
         `Array`,
         [codec],
         i => {

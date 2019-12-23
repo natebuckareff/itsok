@@ -3,7 +3,7 @@ import { Regex } from './Regex';
 import { Try, Ok } from './Result';
 
 function _Buffer(encoding: BufferEncoding) {
-    return new GenericCodec<string | Buffer, Buffer, [BufferEncoding]>(
+    return new GenericCodec<string | Buffer, Buffer, string, [BufferEncoding]>(
         `Buffer`,
         [encoding],
         i => {

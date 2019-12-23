@@ -13,12 +13,16 @@ const LITERAL_CODECS: any = {
     string: 'String',
 };
 
-export class GenericCodec<I, O, P extends any[] = []> extends Codec<I, O> {
+export class GenericCodec<I, O, S, P extends any[] = []> extends Codec<
+    I,
+    O,
+    S
+> {
     constructor(
         public readonly name: string,
         public readonly params: P,
         public readonly parse: (i: I) => CodecResult<O>,
-        public readonly serialize: (o: O) => CodecResult<I>,
+        public readonly serialize: (o: O) => CodecResult<S>,
     ) {
         super(name, parse, serialize);
     }

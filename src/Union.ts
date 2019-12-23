@@ -7,7 +7,14 @@ export type UnionOutputTuple<T extends any[]> = {
     [K in keyof T]: T[K] extends Codec<any, infer O> ? O : any;
 };
 
+export type UnionSerializedTuple<T extends any[]> = {
+    [K in keyof T]: T[K] extends Codec<any, any, infer S> ? S : any;
+};
+
 export type UnionOutput<T extends any[]> = Unionize<UnionOutputTuple<T>>;
+export type UnionSerialized<T extends any[]> = Unionize<
+    UnionSerializedTuple<T>
+>;
 
 interface EmbeddedTuple<ArgsT extends any[]> {
     arr: ArgsT;
@@ -25,6 +32,7 @@ type Cons<T, Ts extends any[]> = EmbeddedCons<T, Ts>['arr'];
 type UnionCodec<CS extends CodecLike[]> = GenericCodec<
     unknown,
     UnionOutput<CS>,
+    UnionSerialized<CS>,
     CS
 >;
 
@@ -54,9 +62,13 @@ function Union<C extends CodecLike, CS extends CodecLike[]>(...args: any[]) {
         codecs = args.slice(1) as any;
     }
 
-    return new GenericCodec<unknown, UnionOutput<Cons<C, CS>>, Cons<C, CS>>(
+    type T = Cons<C, CS>;
+    type O = UnionOutput<T>;
+    type S = UnionSerialized<T>;
+
+    return new GenericCodec<unknown, O, S, T>(
         alias || 'Union',
-        [codec, ...codecs] as Cons<C, CS>,
+        [codec, ...codecs] as T,
         unk => {
             let i = 0;
             let r = codec.parse(unk);
