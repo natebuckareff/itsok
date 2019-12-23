@@ -1,5 +1,4 @@
-import { Codec, CodecLike, CodecResult } from './Codec';
-import { GenericFactoryReference } from './SchemaDocument';
+import { Codec, CodecLike } from './Codec';
 import { GenericCodec } from './GenericCodec';
 
 export type Unionize<T extends any[]> = T[number];

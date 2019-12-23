@@ -3,8 +3,8 @@
  * enough for most codecs.
  */
 
-import { Codec, CodecResult, CodecError, CodecLike } from './Codec';
-import { GenericFactoryReference, Reference } from './SchemaDocument';
+import { Codec, CodecResult, CodecError } from './Codec';
+import { GenericFactoryReference } from './SchemaDocument';
 
 const LITERAL_CODECS: any = {
     null: 'Null',
