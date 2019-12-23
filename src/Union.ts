@@ -36,38 +36,16 @@ type UnionCodec<CS extends CodecLike[]> = GenericCodec<
     CS
 >;
 
-function Union<C extends CodecLike, CS extends CodecLike[]>(
+export function Union<C extends CodecLike, CS extends CodecLike[]>(
     codec: C,
     ...codecs: CS
-): UnionCodec<Cons<C, CS>>;
-
-function Union<C extends CodecLike, CS extends CodecLike[]>(
-    alias: string,
-    codec: C,
-    ...codecs: CS
-): UnionCodec<Cons<C, CS>>;
-
-function Union<C extends CodecLike, CS extends CodecLike[]>(...args: any[]) {
-    let alias: string | null;
-    let codec: CodecLike;
-    let codecs: CS;
-
-    if (typeof args[0] === 'string') {
-        alias = args[0];
-        codec = args[1];
-        codecs = args.slice(2) as any;
-    } else {
-        alias = null;
-        codec = args[0];
-        codecs = args.slice(1) as any;
-    }
-
+): UnionCodec<Cons<C, CS>> {
     type T = Cons<C, CS>;
     type O = UnionOutput<T>;
     type S = UnionSerialized<T>;
 
     return new GenericCodec<unknown, O, S, T>(
-        alias || 'Union',
+        'Union',
         [codec, ...codecs] as T,
         unk => {
             let i = 0;
@@ -92,5 +70,3 @@ function Union<C extends CodecLike, CS extends CodecLike[]>(...args: any[]) {
         },
     );
 }
-
-export { Union };
