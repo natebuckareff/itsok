@@ -1,5 +1,6 @@
+import { CodecError } from './Codec';
 import { Ok, Err, Try } from './Result';
-import { PrimitiveCodec, UnexpectedTypeError } from './Primitive';
+import { PrimitiveCodec, CodecUnexpectedTypeError } from './Primitive';
 import { Regex } from './Regex';
 
 const _Number = new PrimitiveCodec<unknown, number>(
@@ -12,7 +13,7 @@ const _Number = new PrimitiveCodec<unknown, number>(
                 Try(() => Number.parseFloat(s)),
             );
         } else {
-            return Err(new UnexpectedTypeError('Number', i));
+            return Err(new CodecUnexpectedTypeError('Number', i));
         }
     },
     Ok,
@@ -36,11 +37,11 @@ export const Integer = new PrimitiveCodec<unknown, IntegerType>(
             } else if (typeof i === 'string') {
                 n = Number.parseInt(Regex.Integer.parse(i).unwrap());
             } else {
-                throw new UnexpectedTypeError('Integer', i);
+                throw new CodecUnexpectedTypeError('Integer', i);
             }
 
             if (!Number.isSafeInteger(n)) {
-                throw new Error('Expected *safe* integer');
+                throw new CodecError('Expected *safe* integer');
             }
 
             return n as IntegerType;

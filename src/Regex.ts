@@ -1,4 +1,4 @@
-import { Alias } from './Codec';
+import { Alias, CodecError } from './Codec';
 import { GenericCodec } from './GenericCodec';
 import { Ok, Err } from './Result';
 import { String } from './Primitive';
@@ -11,7 +11,7 @@ export function Regex(re: RegExp) {
             return String.parse(u).pipe(s => {
                 if (!re.test(s)) {
                     return Err(
-                        new Error(
+                        new CodecError(
                             `Regex pattern '${re.source}' failed to match '${s}'`,
                         ),
                     );

@@ -32,7 +32,7 @@ function _Array<C extends CodecLike>(codec: C) {
         [codec],
         i => {
             if (!Array.isArray(i)) {
-                return Err(new Error('Expected array'));
+                return Err(new CodecError('Expected array'));
             }
             return serdes(codec, i, (c, x) => c.parse(x));
         },

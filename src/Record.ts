@@ -1,4 +1,4 @@
-import { Codec, CodecLike, CodecResult } from './Codec';
+import { Codec, CodecLike, CodecResult, CodecError } from './Codec';
 import { RecordFactoryReference } from './SchemaDocument';
 import { Result, Ok, Err } from './Result';
 
@@ -12,12 +12,12 @@ function serdes<F extends RecordFields, I, O>(
     fields: F,
     input: I,
     fn: (codec: CodecLike, x: any) => CodecResult<any>,
-): Result<O, Error> {
+): Result<O, CodecError> {
     let cow = input as any;
     for (const k in fields) {
         const v = cow[k];
         if (v === undefined) {
-            return Err(new Error(`Missing field "${k}"`));
+            return Err(new CodecError(`Missing field "${k}"`));
         }
 
         const r = fn(fields[k], v);

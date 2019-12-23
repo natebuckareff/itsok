@@ -3,7 +3,7 @@
  * enough for most codecs.
  */
 
-import { Codec, CodecResult } from './Codec';
+import { Codec, CodecResult, CodecError } from './Codec';
 import { GenericFactoryReference, Reference } from './SchemaDocument';
 
 const LITERAL_CODECS: any = {
@@ -59,7 +59,7 @@ export class GenericCodec<I, O, P extends any[] = []> extends Codec<I, O> {
                             value: param,
                         });
                     } else {
-                        throw new Error('Unknown literal type');
+                        throw new CodecError('Unknown literal type');
                     }
                 }
             }

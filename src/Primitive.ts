@@ -1,10 +1,11 @@
-import { Codec, CodecResult } from './Codec';
+import { Codec, CodecResult, CodecError } from './Codec';
 import { CodecReference } from './SchemaDocument';
 import { Ok, Err } from './Result';
 
-export class UnexpectedTypeError extends Error {
+export class CodecUnexpectedTypeError extends CodecError {
     constructor(expected: string, actual: any) {
         super(`Expected type ${expected}, got ${typeof actual}`);
+        this.name = 'CodecUnexpectedTypeError';
     }
 }
 
@@ -31,7 +32,7 @@ export function Is<O>(name: string, value: O) {
         u => {
             return Object.is(u, value)
                 ? Ok(u as O)
-                : Err(new Error(`Equality failed for ${value} and ${u}`));
+                : Err(new CodecError(`Equality failed for ${value} and ${u}`));
         },
         Ok,
     );
@@ -43,7 +44,7 @@ export function TypeOf<O>(name: string, type: string) {
         u => {
             return typeof u === type
                 ? Ok(u as O)
-                : Err(new UnexpectedTypeError(name, u));
+                : Err(new CodecUnexpectedTypeError(name, u));
         },
         Ok,
     );
