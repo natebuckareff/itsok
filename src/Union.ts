@@ -51,7 +51,7 @@ export function Union<C extends CodecLike, CS extends CodecLike[]>(
             let i = 0;
             let r = codec.parse(unk);
             while (true) {
-                if (r.success || i >= codecs.length) {
+                if (!r.isError || i >= codecs.length) {
                     break;
                 }
                 r = codecs[i].parse(unk);
