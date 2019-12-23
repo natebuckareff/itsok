@@ -57,7 +57,7 @@ export class RecordCodec<
     }
 
     hasSchemaDefinition() {
-        return true;
+        return this.alias !== null;
     }
 
     *getReferences(): Iterable<CodecLike> {
@@ -71,10 +71,14 @@ export class RecordCodec<
     }
 
     schemaReference(): Reference {
-        return {
-            type: 'CodecReference',
-            name: this.name,
-        };
+        if (this.alias === null) {
+            return this.schemaDefinition();
+        } else {
+            return {
+                type: 'CodecReference',
+                name: this.name,
+            };
+        }
     }
 
     schemaDefinition(each?: (codec: CodecLike) => void): Reference {
