@@ -78,6 +78,10 @@ export class SchemaBuilder {
         const defs = new Map<string, Reference>();
 
         for (const [name, codec] of this.defs.entries()) {
+            if (!codec.hasSchemaDefinition()) {
+                continue;
+            }
+
             let s = deps.get(name);
             if (s === undefined) {
                 s = new Set();
