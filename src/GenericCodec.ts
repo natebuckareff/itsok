@@ -3,7 +3,7 @@
  * enough for most codecs.
  */
 
-import { Codec, CodecResult, CodecError } from './Codec';
+import { Codec, CodecResult, CodecError, CodecLike } from './Codec';
 import { GenericFactoryReference } from './SchemaDocument';
 
 const LITERAL_CODECS: any = {
@@ -43,7 +43,7 @@ export class GenericCodec<I, O, S, P extends any[] = []> extends Codec<
         }
     }
 
-    *getReferences() {
+    *getReferences(): Iterable<CodecLike> {
         for (const p of this.params) {
             if (p instanceof Codec) {
                 yield p;

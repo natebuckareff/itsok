@@ -60,7 +60,7 @@ export class RecordCodec<
         return true;
     }
 
-    *getReferences() {
+    *getReferences(): Iterable<CodecLike> {
         for (const k in this.fields) {
             const c = this.fields[k];
             yield c;
