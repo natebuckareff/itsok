@@ -1,8 +1,6 @@
 import * as Schema from '../SchemaDocument';
 import { Text, wrap, generateText } from './text';
 
-const iok = require('../.');
-
 export function codegenSchema(schema: Schema.SchemaDocument) {
     const ctx: Ctx = {
         schema,
@@ -10,8 +8,8 @@ export function codegenSchema(schema: Schema.SchemaDocument) {
     };
     const body: Text[] = [`import * as iok from "itsok";`, ``];
     for (const x of schema.definitions) {
-        // Skip definitions that have the same name as any builtin
-        if (iok[x.name] !== undefined) {
+        // Skip self-referencing definitions
+        if ((x.reference as any).name && (x.reference as any).name === x.name) {
             continue;
         }
 
