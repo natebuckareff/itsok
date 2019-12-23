@@ -21,8 +21,21 @@ export class Codec<I, O> {
         return this.name;
     }
 
-    schema(): Reference {
-        throw new Error('Not implemented');
+    hasSchemaDefinition(): boolean {
+        return false;
+    }
+
+    schemaReference(): Reference {
+        return {
+            type: 'CodecReference',
+            name: this.name,
+        };
+    }
+
+    schemaDefinition(_?: (codec: CodecLike) => void): Reference {
+        throw new Error(
+            `Codec "${this.name}" does not have a schema definition`,
+        );
     }
 }
 

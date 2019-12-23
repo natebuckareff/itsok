@@ -1,5 +1,5 @@
 import { Codec, CodecLike, CodecResult, CodecError } from './Codec';
-import { RecordFactoryReference } from './SchemaDocument';
+import { RecordFactoryReference, Reference } from './SchemaDocument';
 import { Result, Ok, Err } from './Result';
 
 export type RecordFields = { [key: string]: CodecLike };
@@ -51,15 +51,30 @@ export class RecordCodec<
         return this.alias ? `Record(${this.alias})` : 'Record';
     }
 
-    schema() {
-        const ref: RecordFactoryReference = {
+    hasSchemaDefinition() {
+        return true;
+    }
+
+    schemaReference(): Reference {
+        return {
+            type: 'CodecReference',
+            name: this.name,
+        };
+    }
+
+    schemaDefinition(each?: (codec: CodecLike) => void): Reference {
+        const r: RecordFactoryReference = {
             type: 'RecordFactoryReference',
             fields: {},
         };
         for (const k in this.fields) {
-            ref.fields[k] = this.fields[k].schema();
+            const f = this.fields[k];
+            if (each) {
+                each(f);
+            }
+            r.fields[k] = f.schemaReference();
         }
-        return ref;
+        return r;
     }
 }
 

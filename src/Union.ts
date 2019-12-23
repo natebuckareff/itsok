@@ -1,5 +1,6 @@
 import { Codec, CodecLike, CodecResult } from './Codec';
 import { GenericFactoryReference } from './SchemaDocument';
+import { GenericCodec } from './GenericCodec';
 
 export type Unionize<T extends any[]> = T[number];
 
@@ -8,33 +9,6 @@ export type UnionOutputTuple<T extends any[]> = {
 };
 
 export type UnionOutput<T extends any[]> = Unionize<UnionOutputTuple<T>>;
-
-export class UnionCodec<C extends CodecLike[]> extends Codec<
-    unknown,
-    UnionOutput<C>
-> {
-    constructor(
-        public readonly alias: string | null,
-        public readonly codecs: C,
-        public readonly parse: (i: unknown) => CodecResult<UnionOutput<C>>,
-        public readonly serialize: (o: UnionOutput<C>) => CodecResult<unknown>,
-    ) {
-        super('Union', parse, serialize);
-    }
-
-    display() {
-        return this.alias ? `Union(${this.alias})` : 'Union';
-    }
-
-    schema() {
-        const ref: GenericFactoryReference = {
-            type: 'GenericFactoryReference',
-            name: this.name,
-            args: this.codecs.map(x => x.schema()),
-        };
-        return ref;
-    }
-}
 
 interface EmbeddedTuple<ArgsT extends any[]> {
     arr: ArgsT;
@@ -48,6 +22,12 @@ type EmbeddedCons<T, SubArgsT extends any[]> = ((
     : never;
 
 type Cons<T, Ts extends any[]> = EmbeddedCons<T, Ts>['arr'];
+
+type UnionCodec<CS extends CodecLike[]> = GenericCodec<
+    unknown,
+    UnionOutput<CS>,
+    CS
+>;
 
 function Union<C extends CodecLike, CS extends CodecLike[]>(
     codec: C,
@@ -75,9 +55,9 @@ function Union<C extends CodecLike, CS extends CodecLike[]>(...args: any[]) {
         codecs = args.slice(1) as any;
     }
 
-    return new UnionCodec<Cons<C, CS>>(
-        alias,
-        [codec, ...codecs] as [C] & CS,
+    return new GenericCodec<unknown, UnionOutput<Cons<C, CS>>, Cons<C, CS>>(
+        alias || 'Union',
+        [codec, ...codecs] as Cons<C, CS>,
         unk => {
             let i = 0;
             let r = codec.parse(unk);

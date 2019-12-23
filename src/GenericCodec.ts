@@ -3,7 +3,7 @@
  * enough for most codecs.
  */
 
-import { Codec, CodecResult, CodecError } from './Codec';
+import { Codec, CodecResult, CodecError, CodecLike } from './Codec';
 import { GenericFactoryReference, Reference } from './SchemaDocument';
 
 const LITERAL_CODECS: any = {
@@ -39,21 +39,21 @@ export class GenericCodec<I, O, P extends any[] = []> extends Codec<I, O> {
         }
     }
 
-    schema(): Reference {
-        const ref: GenericFactoryReference = {
+    schemaReference() {
+        const r: GenericFactoryReference = {
             type: 'GenericFactoryReference',
             name: this.name,
             args: [],
         };
         if (this.params.length > 0) {
-            ref.args = [];
+            r.args = [];
             for (const param of this.params) {
                 if (param instanceof Codec) {
-                    ref.args.push(param.schema());
+                    r.args.push(param.schemaReference());
                 } else {
                     const codec = LITERAL_CODECS[typeof param];
                     if (codec !== undefined) {
-                        ref.args.push({
+                        r.args.push({
                             type: 'Literal',
                             codec,
                             value: param,
@@ -64,6 +64,6 @@ export class GenericCodec<I, O, P extends any[] = []> extends Codec<I, O> {
                 }
             }
         }
-        return ref;
+        return r;
     }
 }

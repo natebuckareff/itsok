@@ -66,7 +66,7 @@ function* codegenGenericFactoryReference(
             if (x.type === 'Literal') {
                 return JSON.stringify(x.value);
             } else {
-                return codegenReference(x, ctx);
+                return [...codegenReference(x, ctx)];
             }
         })
         .join(', ')})`;

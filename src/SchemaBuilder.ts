@@ -1,5 +1,35 @@
 import { CodecLike } from './Codec';
-import { SchemaDocument } from './SchemaDocument';
+import { SchemaDocument, Reference } from './SchemaDocument';
+
+function topologicalSort<T, K>(deps: Map<T, Iterable<T>>, key: (x: T) => K) {
+    const r: T[] = [];
+    const permanent = new Set<K>();
+    const temporary = new Set<K>();
+
+    const visit = (n: T) => {
+        if (permanent.has(key(n))) {
+            return;
+        } else if (temporary.has(key(n))) {
+            throw new Error();
+        }
+
+        temporary.add(key(n));
+
+        for (const m of deps.get(n) || []) {
+            visit(m);
+        }
+
+        temporary.delete(key(n));
+        permanent.add(key(n));
+        r.push(n);
+    };
+
+    for (const n of deps.keys()) {
+        visit(n);
+    }
+
+    return r;
+}
 
 export class SchemaBuilder {
     private defs = new Map<string, CodecLike>();
@@ -43,19 +73,33 @@ export class SchemaBuilder {
             type: 'SchemaDocument',
             definitions: [],
         };
-        for (const [name, codec] of this.defs.entries()) {
-            const reference = codec.schema();
-            // Skip self-referencing definitions
-            if ((reference as any).name && (reference as any).name === name) {
-                continue;
-            }
 
+        const deps = new Map<string, Set<string>>();
+        const defs = new Map<string, Reference>();
+
+        for (const [name, codec] of this.defs.entries()) {
+            let s = deps.get(name);
+            if (s === undefined) {
+                s = new Set();
+                deps.set(name, s);
+            }
+            const def = codec.schemaDefinition(c => {
+                if (c.hasSchemaDefinition()) {
+                    s!.add(c.name);
+                }
+            });
+            defs.set(name, def);
+        }
+
+        const sorted = topologicalSort(deps, x => x);
+        for (const name of sorted) {
             schema.definitions.push({
                 type: 'CodecDefinition',
                 name,
-                reference,
+                reference: defs.get(name)!,
             });
         }
+
         return schema;
     }
 }
