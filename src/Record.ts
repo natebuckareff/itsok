@@ -18,13 +18,14 @@ function serdes<F extends RecordFields, I, O>(
     fn: (codec: CodecLike, x: any) => CodecResult<any>,
 ): Result<O, CodecError> {
     let cow = input as any;
-    for (const k in fields) {
-        const v = cow[k];
-        if (v === undefined) {
-            return Err(new CodecError(`Missing field "${k}"`));
+    for (const k of [...Object.keys(fields), ...Object.keys(cow)]) {
+        const f = fields[k];
+        if (f === undefined) {
+            return Err(new CodecError(`Unknown field "${k}"`));
         }
 
-        const r = fn(fields[k], v);
+        const v = cow[k];
+        const r = fn(f, v);
         if (r.isError) {
             return r;
         }
