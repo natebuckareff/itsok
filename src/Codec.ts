@@ -25,6 +25,10 @@ export class Codec<I, O, S = I> {
         return false;
     }
 
+    *getReferences(): Iterable<CodecLike> {
+        return;
+    }
+
     schemaReference(): Reference {
         return {
             type: 'CodecReference',

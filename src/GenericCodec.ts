@@ -43,6 +43,17 @@ export class GenericCodec<I, O, S, P extends any[] = []> extends Codec<
         }
     }
 
+    *getReferences() {
+        for (const p of this.params) {
+            if (p instanceof Codec) {
+                yield p;
+                for (const r of p.getReferences()) {
+                    yield r;
+                }
+            }
+        }
+    }
+
     schemaReference() {
         const r: GenericFactoryReference = {
             type: 'GenericFactoryReference',

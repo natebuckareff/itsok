@@ -60,6 +60,16 @@ export class RecordCodec<
         return true;
     }
 
+    *getReferences() {
+        for (const k in this.fields) {
+            const c = this.fields[k];
+            yield c;
+            for (const r of c.getReferences()) {
+                yield r;
+            }
+        }
+    }
+
     schemaReference(): Reference {
         return {
             type: 'CodecReference',

@@ -35,15 +35,19 @@ export class SchemaBuilder {
     private defs = new Map<string, CodecLike>();
 
     register<C extends CodecLike>(codec: C) {
-        const exists = this.defs.get(codec.name);
-        if (exists !== undefined) {
-            if (exists !== codec) {
+        if (codec.hasSchemaDefinition()) {
+            const exists = this.defs.get(codec.name);
+            if (exists !== undefined && exists !== codec) {
                 throw new Error(
                     `Codec definition already exists for "${codec.name}"`,
                 );
+            } else {
+                this.defs.set(codec.name, codec);
             }
-        } else {
-            this.defs.set(codec.name, codec);
+        }
+
+        for (const r of codec.getReferences()) {
+            this.register(r);
         }
     }
 
@@ -78,10 +82,6 @@ export class SchemaBuilder {
         const defs = new Map<string, Reference>();
 
         for (const [name, codec] of this.defs.entries()) {
-            if (!codec.hasSchemaDefinition()) {
-                continue;
-            }
-
             let s = deps.get(name);
             if (s === undefined) {
                 s = new Set();
