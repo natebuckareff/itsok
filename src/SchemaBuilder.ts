@@ -44,10 +44,16 @@ export class SchemaBuilder {
             definitions: [],
         };
         for (const [name, codec] of this.defs.entries()) {
+            const reference = codec.schema();
+            // Skip self-referencing definitions
+            if ((reference as any).name && (reference as any).name === name) {
+                continue;
+            }
+
             schema.definitions.push({
                 type: 'CodecDefinition',
                 name,
-                reference: codec.schema(),
+                reference,
             });
         }
         return schema;

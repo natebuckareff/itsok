@@ -8,11 +8,6 @@ export function codegenSchema(schema: Schema.SchemaDocument) {
     };
     const body: Text[] = [`import * as iok from "itsok";`, ``];
     for (const x of schema.definitions) {
-        // Skip self-referencing definitions
-        if ((x.reference as any).name && (x.reference as any).name === x.name) {
-            continue;
-        }
-
         body.push(
             ...wrap(
                 `export const ${x.name} = `,
