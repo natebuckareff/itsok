@@ -1,5 +1,6 @@
 export * from './Array';
 export * from './Bytes';
+export * from './Check';
 export * from './Codec';
 export * from './GenericCodec';
 export * from './Json';
