@@ -10,15 +10,23 @@ export class CodecError extends Error {
 
 export type CodecResult<T> = Result<T, CodecError>;
 
-export class Codec<I, O, S = I> {
+export class Codec<I, O, S = I, A = O> {
     constructor(
         public readonly name: string,
         public readonly parse: (i: I) => CodecResult<O>,
-        public readonly serialize: (o: O) => CodecResult<S>,
+        public readonly serialize: (o: A) => CodecResult<S>,
     ) {}
 
     display(): string {
         return this.name;
+    }
+
+    pipe<pO, pA>(codec: Codec<O, pO, A, pA>) {
+        return new Codec<I, pO, S, pA>(
+            `Compose(${this.name} . ${codec.name})`,
+            x => this.parse(x).pipe(codec.parse),
+            x => codec.serialize(x).pipe(this.serialize),
+        );
     }
 
     hasSchemaDefinition(): boolean {
