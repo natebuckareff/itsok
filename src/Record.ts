@@ -16,13 +16,24 @@ export type RecordSerialized<F extends RecordFields> = {
     [K in keyof F]: F[K] extends Codec<any, any, infer S> ? S : never;
 };
 
+function* mergeKeys(a: any, b: any): Iterable<string> {
+    for (const k in a) {
+        yield k;
+    }
+    for (const k in b) {
+        if (!a[k]) {
+            yield k;
+        }
+    }
+}
+
 function serdes<F extends RecordFields, I, O>(
     fields: F,
     input: I,
     fn: (codec: CodecLike, x: any) => CodecResult<any>,
 ): Result<O, CodecError> {
     let cow = input as any;
-    for (const k of [...Object.keys(fields), ...Object.keys(cow)]) {
+    for (const k of mergeKeys(fields, cow)) {
         const f = fields[k];
         if (f === undefined) {
             return Err(new CodecError(`Unknown field "${k}"`));
