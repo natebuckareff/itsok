@@ -53,10 +53,24 @@ function Err(x: any) {
 }
 export { Err };
 
-export function Try<T, E>(cb: () => T): Result<T, E> {
-    try {
-        return Ok(cb());
-    } catch (error) {
-        return Err(error);
+export function Try<T, E extends Error>(cb: () => T): Result<T, E>;
+export function Try<T, E extends Error>(
+    wrap: (e: Error) => E,
+    cb: () => T,
+): Result<T, E>;
+
+export function Try(arg1: any, arg2?: any): any {
+    if (arg2 === undefined) {
+        try {
+            return Ok(arg1());
+        } catch (error) {
+            return Err(error);
+        }
+    } else {
+        try {
+            return Ok(arg2());
+        } catch (error) {
+            return Err(arg1(error));
+        }
     }
 }
