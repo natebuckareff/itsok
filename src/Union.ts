@@ -60,11 +60,14 @@ export function Union<C extends CodecLike, CS extends CodecLike[]>(
             return r;
         },
         o => {
-            const r = codec.serialize(o);
+            let i = 0;
+            let r = codec.serialize(o);
             while (true) {
-                if (r.success) {
+                if (!r.isError || i >= codecs.length) {
                     break;
                 }
+                r = codecs[i].serialize(o);
+                i += 1;
             }
             return r;
         },
