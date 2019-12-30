@@ -31,4 +31,5 @@ export namespace Regex {
 
     export const Integer = Alias('Regex.Integer', Regex(/^[+-]?[0-9]+$/));
     export const Hex = Alias('Regex.Hex', Regex(/^[a-zA-Z0-9]+$/));
+    export const Base64 = Alias('Regex.Base64', Regex(/^[a-zA-Z0-9_=-]+$/));
 }
