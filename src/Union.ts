@@ -29,7 +29,7 @@ type EmbeddedCons<T, SubArgsT extends any[]> = ((
 
 type Cons<T, Ts extends any[]> = EmbeddedCons<T, Ts>['arr'];
 
-type UnionCodec<CS extends CodecLike[]> = GenericCodec<
+export type UnionCodec<CS extends CodecLike[]> = GenericCodec<
     unknown,
     UnionOutput<CS>,
     UnionSerialized<CS>,
