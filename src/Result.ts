@@ -74,3 +74,11 @@ export function Try(arg1: any, arg2?: any): any {
         }
     }
 }
+
+export function TryAsync<T, E extends Error>(
+    cb: () => Promise<T>,
+): Promise<Result<T, E>> {
+    return cb()
+        .then(x => Ok(x))
+        .catch(e => Err(e));
+}
