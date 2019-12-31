@@ -54,14 +54,9 @@ function serdes<F extends RecordFields, I, O>(
     return Ok(cow);
 }
 
-// TODO XXX Not sure how I feel about forcing Exact on Record output; it matches
-// how serdes works for now
-type ExactInner<T> = <D>() => D extends T ? D : D;
-type Exact<T> = ExactInner<T> & T;
-
 export class RecordCodec<
     F extends RecordFields,
-    O = Exact<RecordOutput<F>>,
+    O = RecordOutput<F>,
     S = RecordSerialized<F>,
     A = RecordA<F>
 > extends Codec<unknown, O, S, A> {
