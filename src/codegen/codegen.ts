@@ -2,12 +2,10 @@ import * as Schema from '../SchemaDocument';
 import { Text, wrap, generateText } from './text';
 
 export interface CodegenConfig {
-    staticTypes: boolean;
+    staticTypeName?: (codec: string) => string;
 }
 
-const DEFAULT_CODEGEN_CONFIG: CodegenConfig = {
-    staticTypes: false,
-};
+const DEFAULT_CODEGEN_CONFIG: CodegenConfig = {};
 
 export function codegenSchema(
     schema: Schema.SchemaDocument,
@@ -26,9 +24,10 @@ export function codegenSchema(
                 ';',
             ),
         );
-        if (config.staticTypes) {
+        if (config.staticTypeName) {
+            const staticName = config.staticTypeName(x.name);
             body.push(
-                `export const ${x.name}Type = iok.CodecOutput<typeof ${x.name}>;`,
+                `export type ${staticName} = iok.CodecOutput<typeof ${x.name}>;`,
             );
         }
         body.push(``);
