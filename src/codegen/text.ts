@@ -1,10 +1,32 @@
+/**
+ * Abstract representation of indented text
+ *
+ * A string is a single line of text. An array of strings are multiple lines of
+ * text at the same level of identation
+ *
+ * ```
+ * > ["foo", "bar", "baz"]
+ * foo
+ * bar
+ * baz
+ * ```
+ *
+ * ```
+ * > ["foo", ["bar", "baz"], "qux"]
+ * foo
+ *   bar
+ *   baz
+ * qux
+ * ```
+ */
+
 export type Text = string | Text[];
 
-export function generateText(text: Text, depth?: number): string {
+export function generateText(text: Text, depth: number = -1): string {
     if (typeof text === 'string') {
-        return depth ? '    '.repeat(depth) + text : text;
+        return '    '.repeat(depth) + text;
     } else {
-        const nextDepth = depth === undefined ? 0 : depth + 1;
+        const nextDepth = depth + 1;
         return text.map(x => generateText(x, nextDepth)).join('\n');
     }
 }
