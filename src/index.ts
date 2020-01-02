@@ -1,3 +1,4 @@
+export * from './Alias';
 export * from './Array';
 export * from './Bytes';
 export * from './Codec';
@@ -5,6 +6,7 @@ export * from './GenericCodec';
 export * from './Json';
 export * from './Numeric';
 export * from './Option';
+export * from './Pipe';
 export * from './Primitive';
 export * from './Record';
 export * from './Regex';
