@@ -4,7 +4,7 @@
  */
 
 import { Codec, CodecResult, CodecError, CodecLike } from './Codec';
-import { GenericFactoryReference } from './SchemaDocument';
+import { GenericFactoryReference, Reference } from './SchemaDocument';
 
 const LITERAL_CODECS: any = {
     null: 'Null',
@@ -55,7 +55,7 @@ export class GenericCodec<I, O, S, P extends any[] = [], A = O> extends Codec<
         }
     }
 
-    schemaReference() {
+    schemaReference(): Reference {
         const r: GenericFactoryReference = {
             type: 'GenericFactoryReference',
             name: this.name,

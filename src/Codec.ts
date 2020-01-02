@@ -6,6 +6,14 @@ export class CodecError extends Error {
         super(message);
         this.name = 'CodecError';
     }
+
+    chain(): CodecError[] {
+        const r: CodecError[] = [this];
+        if (this.cause instanceof CodecError) {
+            r.push(...this.cause.chain());
+        }
+        return r;
+    }
 }
 
 export type CodecResult<T> = Result<T, CodecError>;
@@ -19,14 +27,6 @@ export class Codec<I, O, S = I, A = O> {
 
     display(): string {
         return this.name;
-    }
-
-    pipe<C extends CodecLike>(codec: C) {
-        return new Codec<I, CodecOutput<C>, S, CodecA<C>>(
-            `Pipe(${this.name} . ${codec.name})`,
-            x => this.parse(x).pipe(codec.parse),
-            x => codec.serialize(x).pipe(this.serialize),
-        );
     }
 
     check(check: (x: O) => boolean): Codec<I, O, S, A>;
@@ -85,7 +85,3 @@ export type CodecInput<C> = C extends Codec<infer I, any, any> ? I : never;
 export type CodecOutput<C> = C extends Codec<any, infer O, any> ? O : never;
 export type CodecSerialized<C> = C extends Codec<any, any, infer S> ? S : never;
 export type CodecA<C> = C extends Codec<any, any, any, infer A> ? A : never;
-
-export function Alias<C extends CodecLike>(alias: string, codec: C) {
-    return new Codec(alias, codec.parse, codec.serialize);
-}

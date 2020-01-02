@@ -1,4 +1,5 @@
-import { Alias, CodecError } from './Codec';
+import { Alias } from './Alias';
+import { CodecError } from './Codec';
 import { GenericCodec } from './GenericCodec';
 import { Ok, Err } from './Result';
 import { String } from './Primitive';
