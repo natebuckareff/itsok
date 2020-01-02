@@ -36,6 +36,23 @@ export type UnionCodec<CS extends CodecLike[]> = GenericCodec<
     CS
 >;
 
+// TODO Move to a utility file
+function until<A, B>(
+    xs: Iterable<A>,
+    map: (a: A) => B,
+    stop: (b: B) => boolean,
+): B[] {
+    const arr = [];
+    for (const x of xs) {
+        const y = map(x);
+        arr.push(y);
+        if (stop(y)) {
+            break;
+        }
+    }
+    return arr;
+}
+
 export function Union<C extends CodecLike, CS extends CodecLike[]>(
     codec: C,
     ...codecs: CS
@@ -60,16 +77,13 @@ export function Union<C extends CodecLike, CS extends CodecLike[]>(
             return r;
         },
         o => {
-            let i = 0;
-            let r = codec.serialize(o);
-            while (true) {
-                if (!r.isError || i >= codecs.length) {
-                    break;
-                }
-                r = codecs[i].serialize(o);
-                i += 1;
-            }
-            return r;
+            // Try serializing with each codec until one returns a non-error
+            // result
+            return until(
+                [codec, ...codecs],
+                x => x.serialize(o),
+                x => !x.isError,
+            ).slice(-1)[0];
         },
     );
 }
