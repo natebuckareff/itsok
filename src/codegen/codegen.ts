@@ -1,7 +1,18 @@
 import * as Schema from '../SchemaDocument';
 import { Text, wrap, generateText } from './text';
 
-export function codegenSchema(schema: Schema.SchemaDocument) {
+export interface CodegenConfig {
+    staticTypes: boolean;
+}
+
+const DEFAULT_CODEGEN_CONFIG: CodegenConfig = {
+    staticTypes: false,
+};
+
+export function codegenSchema(
+    schema: Schema.SchemaDocument,
+    config: CodegenConfig = DEFAULT_CODEGEN_CONFIG,
+) {
     const ctx: Ctx = {
         schema,
         defs: new Set(schema.definitions.map(x => x.name)),
@@ -14,8 +25,13 @@ export function codegenSchema(schema: Schema.SchemaDocument) {
                 [...codegenReference(x.reference, ctx)],
                 ';',
             ),
-            '',
         );
+        if (config.staticTypes) {
+            body.push(
+                `export const ${x.name}Type = iok.CodecOutput<typeof ${x.name}>;`,
+            );
+        }
+        body.push(``);
     }
     return generateText(body);
 }
