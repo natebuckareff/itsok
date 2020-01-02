@@ -33,6 +33,11 @@ function serdes<F extends RecordFields, I, O>(
     fn: (codec: CodecLike, x: any) => CodecResult<any>,
 ): Result<O, CodecError> {
     let cow = input as any;
+    const isUndefined = Object.is(cow, undefined);
+    if (isUndefined || Object.is(cow, null)) {
+        const got = isUndefined ? 'undefined' : 'null';
+        return Err(new CodecError(`Expected an object but got ${got} instead`));
+    }
     for (const k of mergeKeys(fields, cow)) {
         const f = fields[k];
         if (f === undefined) {
