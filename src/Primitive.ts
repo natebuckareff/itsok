@@ -25,10 +25,23 @@ export class PrimitiveCodec<I, O> extends Codec<I, O, O> {
     }
 }
 
-export function Is<O>(name: string, value: O) {
-    return new PrimitiveCodec<unknown, O>(name, u => {
+export function Is<O>(value: O): PrimitiveCodec<unknown, O>;
+export function Is<O>(name: string, value: O): PrimitiveCodec<unknown, O>;
+export function Is(arg1: any, arg2?: any) {
+    let name: string;
+    let value: any;
+
+    if (arg2 === undefined) {
+        name = value + '';
+        value = arg1;
+    } else {
+        name = arg1;
+        value = arg2;
+    }
+
+    return new PrimitiveCodec<unknown, any>(name, u => {
         return Object.is(u, value)
-            ? Ok(u as O)
+            ? Ok(u)
             : Err(new CodecError(`Equality failed for ${value} and ${u}`));
     });
 }
