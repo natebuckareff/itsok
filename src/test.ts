@@ -1,46 +1,61 @@
-import { CodecLike } from './Codec';
-import { Record } from './Record';
-import { SchemaBuilder } from './SchemaBuilder';
-import { String, Undefined } from './Primitive';
-import { Union } from './Union';
-import { Number } from './Numeric';
+import { Codec, CodecResult2 } from './Codec';
+import { Ok, Err } from './Result';
 import { inspect } from 'util';
+import { Undefined, String } from './Primitive';
+import { Array } from './Array';
+import { Union } from './Union';
+import { Record } from './Record';
 
-function Option<C extends CodecLike>(codec: C) {
-    return Union(codec, Undefined);
-}
+////////////////////////////////
 
-const User = Record('User', {
-    id: String,
-    username: String,
-    auth: Option(Number),
-});
+// type Unionize<T extends any[]> = T[number];
 
-const User2 = Record('User', {
-    id: String,
-    username: String,
-    auth: Option(Number),
-});
+// type UnionOutput<T extends any[]> = Unionize<
+//     {
+//         [K in keyof T]: CodecOutput2<T[K]>;
+//     }
+// >;
 
-const schema1 = new SchemaBuilder();
-schema1.register(User);
+// type UnionParsed<T extends any[]> = Unionize<
+//     {
+//         [K in keyof T]: CodecParsed2<T[K]>;
+//     }
+// >;
 
-const schema2 = new SchemaBuilder();
-schema2.register(User2);
+// type UnionSerialized<T extends any[]> = Unionize<
+//     {
+//         [K in keyof T]: CodecSerialized2<T[K]>;
+//     }
+// >;
 
-const schema3 = SchemaBuilder.merge(schema1, schema2);
-console.log(inspect(schema3.generate(), true, null));
+// type UnionCodec<Cs extends CodecLike2[]> = Codec<
+//     unknown,
+//     UnionOutput<Cs>,
+//     UnionParsed<Cs>,
+//     UnionSerialized<Cs>,
+//     Cs,
+//     never
+// >;
 
-// const x = Number.parse(100).unwrap();
-// const y = Number.parse('100').unwrap();
-// const z = Number.parse('-100.234e-43').unwrap();
-// const w = Integer.parse('1').unwrap();
-// const a = Integer.parse(1e10).unwrap();
+// function Union<Cs extends CodecLike2[]>(...codecs: Cs): UnionCodec<Cs> {
+//     type I = unknown;
+//     type O = UnionOutput<Cs>;
+//     type P = UnionParsed<Cs>;
+//     type S = UnionSerialized<Cs>;
+//     return Codec.from<I, O, P, S, Cs>(
+//         'Union',
+//         codecs,
+//         u => Ok(u as any),
+//         p => Ok(p as any),
+//     );
+// }
 
-// console.log(x, y, z, w, a);
+const U = Codec.alias(
+    'User',
+    Record({
+        username: String,
+    }),
+);
+// const x = U.parse({} as any).unwrap();
 
-// console.log(nutil.inspect(schema.generate(), true, null));
-
-// schema.register('User', User)
-// schema.register('Something', Something)
-// schema.generate()
+console.log(inspect(U.getDefinition(), true, null));

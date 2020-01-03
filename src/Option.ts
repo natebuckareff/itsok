@@ -1,11 +1,7 @@
-import { CodecLike } from './Codec';
-import { GenericCodec } from './GenericCodec';
+import { Codec } from './Codec';
 import { Undefined } from './Primitive';
-import { Union, UnionCodec } from './Union';
+import { Union } from './Union';
 
-export function Option<C extends CodecLike>(
-    codec: C,
-): UnionCodec<[C, typeof Undefined]> {
-    const U = Union(codec, Undefined);
-    return new GenericCodec('Option', [codec], U.parse, U.serialize) as any;
+export function Option<C extends Codec.Like>(codec: C) {
+    return Codec.ref('Option', [codec], Union(codec, Undefined));
 }

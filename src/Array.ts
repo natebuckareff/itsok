@@ -1,55 +1,63 @@
-import { GenericCodec } from './GenericCodec';
+import { Codec, CodecResult2, CodecError } from './Codec';
 import { Ok, Err } from './Result';
 
-import {
-    CodecResult,
-    CodecLike,
-    CodecOutput,
-    CodecError,
-    CodecSerialized,
-} from './Codec';
-
-function serdes<C extends CodecLike, I, O>(
-    codec: C,
-    input: I,
-    fn: (codec: CodecLike, x: any) => CodecResult<any>,
-): CodecResult<O[]> {
-    let cow: O[] = input as any;
-    for (let i = 0; i < cow.length; ++i) {
-        const x = cow[i];
-        const r = fn(codec, x);
-        if (r.isError) {
-            return Err(
-                new CodecError(`Expected array of ${codec.name}`, r.error),
-            );
-        }
-        if (r.success !== x) {
-            if ((input as any) === cow) {
-                cow = [...(input as any)];
-            }
-            cow[i] = r.success;
-        }
+export class ArrayCode<C extends Codec.Like> extends Codec<
+    unknown,
+    Codec.OutputT<C>[],
+    Codec.ParsedT<C>[],
+    Codec.SerializedT<C>[],
+    [C],
+    never
+> {
+    constructor(codec: C) {
+        super('Array', [codec]);
     }
-    return Ok(cow);
-}
 
-function _Array<C extends CodecLike>(codec: C) {
-    return new GenericCodec<
-        unknown,
-        CodecOutput<C>[],
-        CodecSerialized<C>[],
-        [C]
-    >(
-        `Array`,
-        [codec],
-        i => {
-            if (!Array.isArray(i)) {
-                return Err(new CodecError('Expected array'));
+    get codec() {
+        return this.args[0];
+    }
+
+    private serdes = <I, O>(
+        input: I,
+        fn: (x: any) => CodecResult2<any>,
+    ): CodecResult2<O[]> => {
+        let cow: O[] = input as any;
+        for (let i = 0; i < cow.length; ++i) {
+            const x = cow[i];
+            const r = fn(x);
+            if (r.isError) {
+                return Err(
+                    new CodecError(
+                        `Expected array of ${this.codec.name}`,
+                        r.error,
+                    ),
+                );
             }
-            return serdes(codec, i, (c, x) => c.parse(x));
-        },
-        o => serdes(codec, o, (c, x) => c.parse(x)),
-    );
+            if (r.success !== x) {
+                if ((input as any) === cow) {
+                    cow = [...(input as any)];
+                }
+                cow[i] = r.success;
+            }
+        }
+        return Ok(cow);
+    };
+
+    parse(input: unknown): CodecResult2<Codec.OutputT<C>[]> {
+        if (!Array.isArray(input)) {
+            return Err(new CodecError('Expected array'));
+        }
+        return this.serdes(input, x => this.codec.parse(x));
+    }
+
+    serialize(
+        parsed: Codec.ParsedT<C>[],
+    ): CodecResult2<Codec.SerializedT<C>[]> {
+        return this.serdes(parsed, x => this.codec.parse(x));
+    }
 }
 
+function _Array<C extends Codec.Like>(codec: C) {
+    return new ArrayCode(codec);
+}
 export { _Array as Array };
