@@ -94,11 +94,28 @@ export class SchemaBuilder {
         const merged = new SchemaBuilder();
         SchemaBuilder.validateNoConflicts(a, b);
         SchemaBuilder.validateNoConflicts(b, a);
+
+        // merge definitions
         for (const [name, codec] of a.defs) {
             merged.defs.set(name, codec);
         }
         for (const [name, codec] of b.defs) {
             merged.defs.set(name, codec);
+        }
+
+        // merge dependencies
+        for (const [name, deps] of a.deps) {
+            merged.deps.set(name, deps);
+        }
+        for (const [name, deps] of b.deps) {
+            if (merged.deps.has(name)) {
+                merged.deps.set(
+                    name,
+                    new Set([...merged.deps.get(name)!, ...deps]),
+                );
+            } else {
+                merged.deps.set(name, deps);
+            }
         }
         return merged;
     }
