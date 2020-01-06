@@ -1,11 +1,29 @@
-import { CodecLike } from './Codec';
+import { CodecLike, CodecError } from './Codec';
 import { GenericCodec } from './GenericCodec';
-import { Undefined } from './Primitive';
+import { Ok, Err } from './Result';
 import { Union, UnionCodec } from './Union';
+
+export type NoneType = undefined | null;
+
+export const None = new GenericCodec<unknown, NoneType, null>(
+    'None',
+    [],
+    u => {
+        if (typeof u === 'undefined' || Object.is(u, null)) {
+            return Ok(u as NoneType);
+        }
+        return Err(
+            new CodecError(
+                `Expected either undefined or null, but got ${typeof u}`,
+            ),
+        );
+    },
+    () => Ok(null),
+);
 
 export function Option<C extends CodecLike>(
     codec: C,
-): UnionCodec<[C, typeof Undefined]> {
-    const U = Union(codec, Undefined);
+): UnionCodec<[C, typeof None]> {
+    const U = Union(codec, None);
     return new GenericCodec('Option', [codec], U.parse, U.serialize) as any;
 }
