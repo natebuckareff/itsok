@@ -1,6 +1,7 @@
-import { Codec, CodecResult, CodecError } from './Codec';
+import { Codec, CodecResult, CodecError, CodecLike } from './Codec';
 import { CodecReference } from './SchemaDocument';
 import { Ok, Err } from './Result';
+import { GenericCodec } from './GenericCodec';
 
 export class CodecUnexpectedTypeError extends CodecError {
     constructor(expected: string, actual: any) {
@@ -25,25 +26,30 @@ export class PrimitiveCodec<I, O> extends Codec<I, O, O> {
     }
 }
 
-export function Is<O>(value: O): PrimitiveCodec<unknown, O>;
-export function Is<O>(name: string, value: O): PrimitiveCodec<unknown, O>;
+export function Is<O>(value: O): GenericCodec<unknown, O, O, [O]>;
+export function Is<O>(name: string, value: O): GenericCodec<unknown, O, O, [O]>;
 export function Is(arg1: any, arg2?: any) {
     let name: string;
     let value: any;
 
     if (arg2 === undefined) {
-        name = value + '';
+        name = 'Is';
         value = arg1;
     } else {
         name = arg1;
         value = arg2;
     }
 
-    return new PrimitiveCodec<unknown, any>(name, u => {
-        return Object.is(u, value)
-            ? Ok(u)
-            : Err(new CodecError(`Equality failed for ${value} and ${u}`));
-    });
+    return new GenericCodec(
+        name,
+        [value],
+        u => {
+            return Object.is(u, value)
+                ? Ok(u)
+                : Err(new CodecError(`Equality failed for ${value} and ${u}`));
+        },
+        Ok,
+    );
 }
 
 export function TypeOf<O>(name: string, type: string) {

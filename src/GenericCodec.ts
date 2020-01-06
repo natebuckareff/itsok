@@ -4,7 +4,7 @@
  */
 
 import { Codec, CodecResult, CodecError, CodecLike } from './Codec';
-import { GenericFactoryReference, Reference } from './SchemaDocument';
+import { GenericFactoryReference, Reference, Literal } from './SchemaDocument';
 
 const LITERAL_CODECS: any = {
     null: 'Null',
@@ -69,11 +69,15 @@ export class GenericCodec<I, O, S, P extends any[] = [], A = O> extends Codec<
                 } else {
                     const codec = LITERAL_CODECS[typeof param];
                     if (codec !== undefined) {
-                        r.args.push({
+                        const lit: Literal = {
                             type: 'Literal',
                             codec,
                             value: param,
-                        });
+                        };
+                        if (this.name === 'Is') {
+                            lit.const = true;
+                        }
+                        r.args.push(lit);
                     } else {
                         throw new CodecError('Unknown literal type');
                     }

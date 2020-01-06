@@ -79,7 +79,8 @@ function* codegenGenericFactoryReference(
     yield `${name}(${ref.args
         .map(x => {
             if (x.type === 'Literal') {
-                return JSON.stringify(x.value);
+                const value = JSON.stringify(x.value);
+                return x.const ? `${value} as const` : value;
             } else {
                 return [...codegenReference(x, ctx)];
             }

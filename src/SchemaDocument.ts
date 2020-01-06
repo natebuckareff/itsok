@@ -39,4 +39,5 @@ export interface Literal {
     type: 'Literal';
     codec: string;
     value: any;
+    const?: boolean;
 }
