@@ -1,4 +1,4 @@
-import { Codec, CodecResult, CodecError, CodecLike } from './Codec';
+import { Codec, CodecResult, CodecError } from './Codec';
 import { CodecReference } from './SchemaDocument';
 import { Ok, Err } from './Result';
 import { GenericCodec } from './GenericCodec';
