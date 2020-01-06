@@ -3,14 +3,12 @@ import { GenericCodec } from './GenericCodec';
 import { Ok, Err } from './Result';
 import { Union, UnionCodec } from './Union';
 
-export type NoneType = undefined | null;
-
-export const None = new GenericCodec<unknown, NoneType, null>(
+export const None = new GenericCodec<unknown, undefined, null>(
     'None',
     [],
     u => {
         if (typeof u === 'undefined' || Object.is(u, null)) {
-            return Ok(u as NoneType);
+            return Ok(undefined);
         }
         return Err(
             new CodecError(
