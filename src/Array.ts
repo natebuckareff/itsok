@@ -48,7 +48,7 @@ function _Array<C extends CodecLike>(codec: C) {
             }
             return serdes(codec, i, (c, x) => c.parse(x));
         },
-        o => serdes(codec, o, (c, x) => c.parse(x)),
+        o => serdes(codec, o, (c, x) => c.serialize(x)),
     );
 }
 
