@@ -7,12 +7,18 @@ export class CodecError extends Error {
         this.name = 'CodecError';
     }
 
-    chain(): CodecError[] {
-        const r: CodecError[] = [this];
-        if (this.cause instanceof CodecError) {
-            r.push(...this.cause.chain());
+    context() {
+        const messages = [];
+        let error: Error | undefined = this.cause;
+        while (error !== undefined) {
+            messages.push(
+                `${'  '.repeat(messages.length + 1)}${error.message}`,
+            );
+            if (error instanceof CodecError) {
+                error = error.cause;
+            }
         }
-        return r;
+        return this.message + '\n' + messages.join('\n');
     }
 }
 

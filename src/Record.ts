@@ -47,7 +47,9 @@ function serdes<F extends RecordFields, I, O>(
         const v = cow[k];
         const r = fn(f, v);
         if (r.isError) {
-            return r;
+            return Err(
+                new CodecError(`Invalid value for field "${k}"`, r.error),
+            );
         }
         if (r.success !== v) {
             if ((input as any) === cow) {
