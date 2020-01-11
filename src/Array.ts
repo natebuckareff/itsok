@@ -1,4 +1,4 @@
-import { Codec, CodecResult2, CodecError } from './Codec';
+import { Codec, CodecResult, CodecError } from './Codec';
 import { Ok, Err } from './Result';
 
 export class ArrayCode<C extends Codec.Like> extends Codec<
@@ -19,8 +19,8 @@ export class ArrayCode<C extends Codec.Like> extends Codec<
 
     private serdes = <I, O>(
         input: I,
-        fn: (x: any) => CodecResult2<any>,
-    ): CodecResult2<O[]> => {
+        fn: (x: any) => CodecResult<any>,
+    ): CodecResult<O[]> => {
         let cow: O[] = input as any;
         for (let i = 0; i < cow.length; ++i) {
             const x = cow[i];
@@ -43,16 +43,14 @@ export class ArrayCode<C extends Codec.Like> extends Codec<
         return Ok(cow);
     };
 
-    parse(input: unknown): CodecResult2<Codec.OutputT<C>[]> {
+    parse(input: unknown): CodecResult<Codec.OutputT<C>[]> {
         if (!Array.isArray(input)) {
             return Err(new CodecError('Expected array'));
         }
         return this.serdes(input, x => this.codec.parse(x));
     }
 
-    serialize(
-        parsed: Codec.ParsedT<C>[],
-    ): CodecResult2<Codec.SerializedT<C>[]> {
+    serialize(parsed: Codec.ParsedT<C>[]): CodecResult<Codec.SerializedT<C>[]> {
         return this.serdes(parsed, x => this.codec.parse(x));
     }
 }

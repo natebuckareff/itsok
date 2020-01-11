@@ -1,4 +1,4 @@
-import { Codec, CodecResult2, CodecError } from './Codec';
+import { Codec, CodecResult, CodecError } from './Codec';
 import { Ok, Err } from './Result';
 
 export class CodecUnexpectedTypeError extends CodecError {
@@ -10,7 +10,7 @@ export class CodecUnexpectedTypeError extends CodecError {
 
 export function Primitive<T>(
     name: string,
-    parse: (input: unknown) => CodecResult2<T>,
+    parse: (input: unknown) => CodecResult<T>,
 ): PrimitiveCodec<T> {
     return Codec.from<unknown, T, T, T>(name, [], parse, Ok);
 }

@@ -15,20 +15,27 @@ export class CodecError extends Error {
     }
 }
 
-export type CodecResult2<T> = Result<T, Error>;
+export type CodecResult<T> = Result<T, Error>;
 
-export class Codec<I, O, P, S, Args extends any[], BR extends Codec.Like> {
+export class Codec<I, O, P, S, Args, BR extends Codec.Like> {
     constructor(
         private _name: string,
         private _args: Args,
         private _backref?: BR,
     ) {}
 
-    static from<I, O, P, S, Args extends any[] = any[]>(
+    static copy<C extends Codec.Like>(codec: C): C {
+        const copy = new Codec(codec.name, codec.args, codec.backref);
+        copy.parse = codec.parse;
+        copy.serialize = codec.serialize;
+        return copy as C;
+    }
+
+    static from<I, O, P, S, Args = any>(
         name: string,
         args: Args,
-        parse: (input: I) => CodecResult2<O>,
-        serialize: (input: P) => CodecResult2<S>,
+        parse: (input: I) => CodecResult<O>,
+        serialize: (input: P) => CodecResult<S>,
     ) {
         const codec = new Codec<I, O, P, S, Args, never>(name, args);
         codec.parse = parse;
@@ -36,7 +43,7 @@ export class Codec<I, O, P, S, Args extends any[], BR extends Codec.Like> {
         return codec;
     }
 
-    static ref<Args extends any[], C extends Codec.Like>(
+    static ref<Args, C extends Codec.Like>(
         name: string,
         args: Args,
         backref: C,
@@ -59,12 +66,24 @@ export class Codec<I, O, P, S, Args extends any[], BR extends Codec.Like> {
         return this._name;
     }
 
+    get backref() {
+        return this._backref;
+    }
+
     get args() {
         return this._args;
     }
 
-    get backref() {
-        return this._backref;
+    visitArgs(visitor: (x: any, k: number | string) => void) {
+        if (Array.isArray(this.args)) {
+            for (let i = 0; i < this.args.length; ++i) {
+                visitor(this.args[i], i);
+            }
+        } else {
+            for (const k in this.args) {
+                visitor(this.args[k], k);
+            }
+        }
     }
 
     pipe<C extends Codec.Like>(codec: C) {
@@ -90,81 +109,52 @@ export class Codec<I, O, P, S, Args extends any[], BR extends Codec.Like> {
         );
     }
 
-    parse(_input: I): CodecResult2<O> {
+    parse(_input: I): CodecResult<O> {
         throw Error('Not Implemented');
     }
 
-    serialize(_parsed: P): CodecResult2<S> {
+    serialize(_parsed: P): CodecResult<S> {
         throw Error('Not Implemented');
     }
 
     getDefinition(): Definition {
         if (this.backref === undefined) {
-            throw Error('Expected codec back reference');
+            throw new Error('');
         }
 
         const params: ParamList = [];
-        const args: ArgList = [];
-
-        const ref: Reference = {
-            type: 'Reference',
-            name: this.backref.name,
-            args,
-        };
-
-        const def: Definition = {
-            type: 'Definition',
-            name: this.name,
-            params,
-            reference: ref,
-        };
-
-        const argmap = new Map();
-        for (const [k, arg] of this.args) {
-            argmap.set(arg, k);
+        const subst = new Map<Codec.Like, number>();
+        this.visitArgs(arg => {
+            subst.set(arg, params.length);
             if (arg instanceof Codec) {
                 params.push('Reference');
             } else {
                 params.push('Literal');
             }
-        }
-        if (params.length === 0) {
-            delete def.params;
-        }
+        });
 
-        for (const arg of this.backref.args) {
-            if (argmap.has(arg)) {
-                args.push({ type: 'Param', param: argmap.get(arg) });
-            } else {
-                if (arg instanceof Codec) {
-                    args.push(arg.getReference());
-                } else {
-                    const typename = typeof arg;
-                    args.push({
-                        type: 'Literal',
-                        kind: typename,
-                        value: arg,
-                    });
-                }
-            }
-        }
-        if (ref.args?.length === 0) {
-            delete ref.args;
-        }
+        const def: Definition = {
+            type: 'Definition',
+            name: this.name,
+            params,
+            reference: this.backref.getReference(subst),
+        };
 
         return def;
     }
 
-    getReference(): Reference {
+    getReference(subst?: Map<Codec.Like, number>): Reference {
         const args: ArgList = [];
         const ref: Reference = {
             type: 'Reference',
             name: this.name,
             args,
         };
-        for (const arg of this.args) {
-            if (arg instanceof Codec) {
-                args.push(arg.getReference());
+        this.visitArgs(arg => {
+            if (subst && subst.has(arg)) {
+                args.push({ type: 'Param', param: subst.get(arg)! });
+            } else if (arg instanceof Codec) {
+                args.push(arg.getReference(subst));
             } else {
                 const typename = typeof arg;
                 args.push({
@@ -173,7 +163,7 @@ export class Codec<I, O, P, S, Args extends any[], BR extends Codec.Like> {
                     value: arg,
                 });
             }
-        }
+        });
         if (args.length === 0) {
             delete ref.args;
         }
@@ -182,15 +172,15 @@ export class Codec<I, O, P, S, Args extends any[], BR extends Codec.Like> {
 }
 
 export namespace Codec {
-    export type InputT<C> = C extends Codec<infer I, any, any, any, any[], any>
+    export type InputT<C> = C extends Codec<infer I, any, any, any, any, any>
         ? I
         : never;
 
-    export type OutputT<C> = C extends Codec<any, infer O, any, any, any[], any>
+    export type OutputT<C> = C extends Codec<any, infer O, any, any, any, any>
         ? O
         : never;
 
-    export type ParsedT<C> = C extends Codec<any, any, infer P, any, any[], any>
+    export type ParsedT<C> = C extends Codec<any, any, infer P, any, any, any>
         ? P
         : never;
 
@@ -199,13 +189,13 @@ export namespace Codec {
         any,
         any,
         infer S,
-        any[],
+        any,
         any
     >
         ? S
         : never;
 
-    export type Like = Codec<any, any, any, any, any[], any>;
+    export type Like = Codec<any, any, any, any, any, any>;
 }
 
 export interface SchemaDocument2 {

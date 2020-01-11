@@ -1,6 +1,6 @@
 import { Ok, Err } from './Result';
 
-import { Codec, CodecResult2, CodecError, Reference, ArgList } from './Codec';
+import { Codec, CodecResult, CodecError, Reference, ArgList } from './Codec';
 
 function* mergeKeys(a: any, b: any): Iterable<string> {
     for (const k in a) {
@@ -32,17 +32,17 @@ export class RecordCodec<F extends RecordFields> extends Codec<
     RecordOutput<F>,
     RecordParsed<F>,
     RecordSerialized<F>,
-    any[],
+    F,
     never
 > {
-    constructor(private fields: F) {
-        super('Record', [fields]);
+    constructor(fields: F) {
+        super('Record', fields);
     }
 
     private serdes = <I, O>(
         input: I,
-        fn: (codec: Codec.Like, x: any) => CodecResult2<any>,
-    ): CodecResult2<O> => {
+        fn: (codec: Codec.Like, x: any) => CodecResult<any>,
+    ): CodecResult<O> => {
         let cow = input as any;
         const isUndefined = Object.is(cow, undefined);
         if (isUndefined || Object.is(cow, null)) {
@@ -51,8 +51,8 @@ export class RecordCodec<F extends RecordFields> extends Codec<
                 new CodecError(`Expected an object but got ${got} instead`),
             );
         }
-        for (const k of mergeKeys(this.fields, cow)) {
-            const f = this.fields[k];
+        for (const k of mergeKeys(this.args, cow)) {
+            const f = this.args[k];
             if (f === undefined) {
                 return Err(new CodecError(`Unknown field "${k}"`));
             }
@@ -72,24 +72,28 @@ export class RecordCodec<F extends RecordFields> extends Codec<
         return Ok(cow);
     };
 
-    parse(input: unknown): CodecResult2<RecordOutput<F>> {
+    parse(input: unknown): CodecResult<RecordOutput<F>> {
         return this.serdes(input, (c, x) => c.parse(x));
     }
 
-    serialize(parsed: RecordParsed<F>): CodecResult2<RecordSerialized<F>> {
+    serialize(parsed: RecordParsed<F>): CodecResult<RecordSerialized<F>> {
         return this.serdes(parsed, (c, x) => c.serialize(x));
     }
 
-    getReference(): Reference {
+    getReference(subst?: Map<Codec.Like, number>): Reference {
         const args: ArgList = {};
         const ref: Reference = {
             type: 'Reference',
             name: this.name,
             args,
         };
-        for (const k in this.fields) {
-            const field = this.fields[k];
-            args[k] = field.getReference();
+        for (const k in this.args) {
+            const field = this.args[k];
+            if (subst && subst.has(field)) {
+                args[k] = { type: 'Param', param: subst.get(field)! };
+            } else {
+                args[k] = field.getReference(subst);
+            }
         }
         return ref;
     }

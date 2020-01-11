@@ -1,4 +1,4 @@
-import { Codec, CodecResult2 } from './Codec';
+import { Codec, CodecResult } from './Codec';
 
 interface EmbeddedTuple<ArgsT extends any[]> {
     arr: ArgsT;
@@ -58,12 +58,12 @@ export class UnionCodec<Cs extends Codec.Like[]> extends Codec<
     Cs,
     never
 > {
-    constructor(private codecs: Cs) {
+    constructor(codecs: Cs) {
         super('Union', codecs);
     }
 
-    parse(input: unknown): CodecResult2<UnionOutput<Cs>> {
-        const [codec, ...codecs] = this.codecs;
+    parse(input: unknown): CodecResult<UnionOutput<Cs>> {
+        const [codec, ...codecs] = this.args;
         let i = 0;
         let r = codec.parse(input);
         while (true) {
@@ -76,9 +76,9 @@ export class UnionCodec<Cs extends Codec.Like[]> extends Codec<
         return r;
     }
 
-    serialize(parsed: UnionParsed<Cs>): CodecResult2<UnionSerialized<Cs>> {
+    serialize(parsed: UnionParsed<Cs>): CodecResult<UnionSerialized<Cs>> {
         // Try serializing with each codec until one returns a non-error result
-        const [codec, ...codecs] = this.codecs;
+        const [codec, ...codecs] = this.args;
         return until(
             [codec, ...codecs],
             x => x.serialize(parsed),
