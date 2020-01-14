@@ -17,9 +17,6 @@ export { _Number as Number };
 // XXX TODO should use something like newtype-ts
 export type IntegerType = number & { readonly __tag: unique symbol };
 
-// XXX TODO serializing should not result in an unknown; instead we should add
-// an additional type paramter to Codec so that the output of `serialize` does
-// not have to equal the input of `parse`
 export const Integer = new PrimitiveCodec<unknown, IntegerType>('Integer', i =>
     Try(() => {
         let n: number;
@@ -38,4 +35,15 @@ export const Integer = new PrimitiveCodec<unknown, IntegerType>('Integer', i =>
 
         return n as IntegerType;
     }),
+);
+
+// XXX TODO should use something like newtype-ts
+export type BigIntegerType = string & { readonly __tag: unique symbol };
+
+export const BigInteger = new PrimitiveCodec<unknown, BigIntegerType>(
+    'BigInteger',
+    i =>
+        typeof i === 'string'
+            ? Regex.Integer.parse(i).pipe(x => Ok(x as BigIntegerType))
+            : Err(new CodecError('Expected string')),
 );
