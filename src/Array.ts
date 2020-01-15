@@ -1,11 +1,12 @@
-import { Codec, CodecResult, CodecError } from './Codec';
+import { Codec, CodecResult } from './Codec';
+import { CodecError } from './CodecError';
 import { Ok, Err } from './Result';
 
-export class ArrayCode<C extends Codec.Like> extends Codec<
+export class ArrayCode<C extends Codec.Any> extends Codec<
     unknown,
-    Codec.OutputT<C>[],
-    Codec.ParsedT<C>[],
-    Codec.SerializedT<C>[],
+    Codec.Output<C>[],
+    Codec.Parsed<C>[],
+    Codec.Serialized<C>[],
     [C],
     never
 > {
@@ -28,6 +29,7 @@ export class ArrayCode<C extends Codec.Like> extends Codec<
             if (r.isError) {
                 return Err(
                     new CodecError(
+                        this,
                         `Expected array of ${this.codec.name}`,
                         r.error,
                     ),
@@ -43,19 +45,19 @@ export class ArrayCode<C extends Codec.Like> extends Codec<
         return Ok(cow);
     };
 
-    parse(input: unknown): CodecResult<Codec.OutputT<C>[]> {
+    parse(input: unknown): CodecResult<Codec.Output<C>[]> {
         if (!Array.isArray(input)) {
-            return Err(new CodecError('Expected array'));
+            return Err(new CodecError(this, 'Expected array'));
         }
         return this.serdes(input, x => this.codec.parse(x));
     }
 
-    serialize(parsed: Codec.ParsedT<C>[]): CodecResult<Codec.SerializedT<C>[]> {
+    serialize(parsed: Codec.Parsed<C>[]): CodecResult<Codec.Serialized<C>[]> {
         return this.serdes(parsed, x => this.codec.parse(x));
     }
 }
 
-function _Array<C extends Codec.Like>(codec: C) {
+function _Array<C extends Codec.Any>(codec: C) {
     return new ArrayCode(codec);
 }
 export { _Array as Array };

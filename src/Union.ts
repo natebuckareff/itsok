@@ -34,23 +34,23 @@ type Unionize<T extends any[]> = T[number];
 
 type UnionOutput<T extends any[]> = Unionize<
     {
-        [K in keyof T]: Codec.OutputT<T[K]>;
+        [K in keyof T]: Codec.Output<T[K]>;
     }
 >;
 
 type UnionParsed<T extends any[]> = Unionize<
     {
-        [K in keyof T]: Codec.ParsedT<T[K]>;
+        [K in keyof T]: Codec.Parsed<T[K]>;
     }
 >;
 
 type UnionSerialized<T extends any[]> = Unionize<
     {
-        [K in keyof T]: Codec.SerializedT<T[K]>;
+        [K in keyof T]: Codec.Serialized<T[K]>;
     }
 >;
 
-export class UnionCodec<Cs extends Codec.Like[]> extends Codec<
+export class UnionCodec<Cs extends Codec.Any[]> extends Codec<
     unknown,
     UnionOutput<Cs>,
     UnionParsed<Cs>,
@@ -87,7 +87,7 @@ export class UnionCodec<Cs extends Codec.Like[]> extends Codec<
     }
 }
 
-export function Union<C extends Codec.Like, CS extends Codec.Like[]>(
+export function Union<C extends Codec.Any, CS extends Codec.Any[]>(
     codec: C,
     ...codecs: CS
 ): UnionCodec<Cons<C, CS>> {

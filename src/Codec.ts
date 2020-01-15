@@ -1,73 +1,47 @@
+import { CodecError } from './CodecError';
+import { Definition, ParamList, Reference, ArgList } from './SchemaDocument';
 import { Result, Ok, Err } from './Result';
 
-export class CodecError extends Error {
-    constructor(message: string, public readonly cause?: Error) {
-        super(message);
-        this.name = 'CodecError';
-    }
+export type CodecResult<T> = Result<T, CodecError>;
 
-    chain(): CodecError[] {
-        const r: CodecError[] = [this];
-        if (this.cause instanceof CodecError) {
-            r.push(...this.cause.chain());
-        }
-        return r;
-    }
-}
+export class Codec<I, O, P, S, Args, Ref extends Codec.Any = Codec.Any> {
+    readonly I!: I;
+    readonly O!: O;
+    readonly P!: P;
+    readonly S!: S;
+    readonly Args!: Args;
+    readonly Ref!: Ref;
 
-export type CodecResult<T> = Result<T, Error>;
-
-export class Codec<I, O, P, S, Args, BR extends Codec.Like> {
     constructor(
         private _name: string,
         private _args: Args,
-        private _backref?: BR,
+        private _ref?: Ref,
     ) {}
-
-    static copy<C extends Codec.Like>(codec: C): C {
-        const copy = new Codec(codec.name, codec.args, codec.backref);
-        copy.parse = codec.parse;
-        copy.serialize = codec.serialize;
-        return copy as C;
-    }
 
     static from<I, O, P, S, Args = any>(
         name: string,
         args: Args,
-        parse: (input: I) => CodecResult<O>,
-        serialize: (input: P) => CodecResult<S>,
+        parse: (
+            input: I,
+            codec: Codec<I, O, P, S, Args, never>,
+        ) => CodecResult<O>,
+        serialize: (
+            input: P,
+            codec: Codec<I, O, P, S, Args, never>,
+        ) => CodecResult<S>,
     ) {
         const codec = new Codec<I, O, P, S, Args, never>(name, args);
-        codec.parse = parse;
-        codec.serialize = serialize;
+        codec.parse = input => parse(input, codec);
+        codec.serialize = parsed => serialize(parsed, codec);
         return codec;
-    }
-
-    static ref<Args, C extends Codec.Like>(
-        name: string,
-        args: Args,
-        backref: C,
-    ) {
-        type I = Codec.InputT<C>;
-        type O = Codec.OutputT<C>;
-        type P = Codec.ParsedT<C>;
-        type S = Codec.SerializedT<C>;
-        const codec = new Codec<I, O, P, S, Args, C>(name, args, backref);
-        codec.parse = backref.parse;
-        codec.serialize = backref.serialize;
-        return codec;
-    }
-
-    static alias<C extends Codec.Like>(name: string, codec: C) {
-        return this.ref(name, [], codec);
     }
 
     get name() {
         return this._name;
     }
 
-    get backref() {
-        return this._backref;
+    get ref() {
+        return this._ref;
     }
 
     get args() {
@@ -86,9 +60,9 @@ export class Codec<I, O, P, S, Args, BR extends Codec.Like> {
         }
     }
 
-    pipe<C extends Codec.Like>(codec: C) {
-        type _O = Codec.OutputT<C>;
-        type _P = Codec.ParsedT<C>;
+    pipe<C extends Codec.Any>(codec: C) {
+        type _O = Codec.Output<C>;
+        type _P = Codec.Parsed<C>;
         return Codec.from<I, _O, _P, S>(
             '_pipe',
             [this, codec],
@@ -118,12 +92,12 @@ export class Codec<I, O, P, S, Args, BR extends Codec.Like> {
     }
 
     getDefinition(): Definition {
-        if (this.backref === undefined) {
+        if (this.ref === undefined) {
             throw new Error('');
         }
 
         const params: ParamList = [];
-        const subst = new Map<Codec.Like, number>();
+        const subst = new Map<Codec.Any, number>();
         this.visitArgs(arg => {
             subst.set(arg, params.length);
             if (arg instanceof Codec) {
@@ -137,13 +111,13 @@ export class Codec<I, O, P, S, Args, BR extends Codec.Like> {
             type: 'Definition',
             name: this.name,
             params,
-            reference: this.backref.getReference(subst),
+            reference: this.ref.getReference(subst),
         };
 
         return def;
     }
 
-    getReference(subst?: Map<Codec.Like, number>): Reference {
+    getReference(subst?: Map<Codec.Any, number>): Reference {
         const args: ArgList = [];
         const ref: Reference = {
             type: 'Reference',
@@ -172,58 +146,18 @@ export class Codec<I, O, P, S, Args, BR extends Codec.Like> {
 }
 
 export namespace Codec {
-    export type InputT<C> = C extends Codec<infer I, any, any, any, any, any>
-        ? I
-        : never;
+    export type Input<C> = C extends Any ? C['I'] : never;
+    export type Output<C> = C extends Any ? C['O'] : never;
+    export type Parsed<C> = C extends Any ? C['P'] : never;
+    export type Serialized<C> = C extends Any ? C['S'] : never;
+    export type Any = Codec<any, any, any, any, any, any>;
 
-    export type OutputT<C> = C extends Codec<any, infer O, any, any, any, any>
-        ? O
-        : never;
-
-    export type ParsedT<C> = C extends Codec<any, any, infer P, any, any, any>
-        ? P
-        : never;
-
-    export type SerializedT<C> = C extends Codec<
-        any,
-        any,
-        any,
-        infer S,
-        any,
-        any
-    >
-        ? S
-        : never;
-
-    export type Like = Codec<any, any, any, any, any, any>;
-}
-
-export interface SchemaDocument2 {
-    type: 'SchemaDocument';
-    definitions: Definition[];
-}
-
-export interface Definition {
-    type: 'Definition';
-    name: string;
-    params?: ParamList;
-    reference: Reference;
-}
-
-export type ParamList = ('Literal' | 'Reference')[];
-
-export interface Reference {
-    type: 'Reference';
-    name: string;
-    args?: ArgList;
-}
-
-export type ArgList = Arg[] | { [arg: string]: Arg };
-export type Arg = Literal | Reference | Param;
-export type Param = { type: 'Param'; param: number };
-
-export interface Literal {
-    type: 'Literal';
-    kind: string;
-    value: any;
+    export class Extended<C extends Codec.Any> extends Codec<
+        C['I'],
+        C['O'],
+        C['P'],
+        C['S'],
+        C['Args'],
+        C['Ref']
+    > {}
 }

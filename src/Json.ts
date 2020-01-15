@@ -1,4 +1,5 @@
-import { Codec, CodecError } from './Codec';
+import { Codec } from './Codec';
+import { CodecError } from './CodecError';
 import { Try } from './Result';
 
 export type AnyJson = boolean | number | string | null | JsonArray | JsonMap;
@@ -12,15 +13,15 @@ export interface JsonArray extends Array<AnyJson> {}
 export const Json = Codec.from<string, AnyJson, AnyJson, string>(
     'Json',
     [],
-    x => {
+    (x, codec) => {
         return Try(
-            e => new CodecError(`Failed to parse JSON`, e),
+            e => new CodecError(codec, `Failed to parse JSON`, e),
             () => JSON.parse(x),
         );
     },
-    x => {
+    (x, codec) => {
         return Try(
-            e => new CodecError(`Failed to serialize JSON`, e),
+            e => new CodecError(codec, `Failed to serialize JSON`, e),
             () => JSON.stringify(x),
         );
     },

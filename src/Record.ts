@@ -1,6 +1,7 @@
+import { ArgList, Reference } from './SchemaDocument';
+import { Codec, CodecResult } from './Codec';
+import { CodecError } from './CodecError';
 import { Ok, Err } from './Result';
-
-import { Codec, CodecResult, CodecError, Reference, ArgList } from './Codec';
 
 function* mergeKeys(a: any, b: any): Iterable<string> {
     for (const k in a) {
@@ -13,18 +14,18 @@ function* mergeKeys(a: any, b: any): Iterable<string> {
     }
 }
 
-export type RecordFields = { [key: string]: Codec.Like };
+export type RecordFields = { [key: string]: Codec.Any };
 
 export type RecordOutput<F extends RecordFields> = {
-    [K in keyof F]: Codec.OutputT<F[K]>;
+    [K in keyof F]: Codec.Output<F[K]>;
 };
 
 export type RecordParsed<F extends RecordFields> = {
-    [K in keyof F]: Codec.ParsedT<F[K]>;
+    [K in keyof F]: Codec.Parsed<F[K]>;
 };
 
 export type RecordSerialized<F extends RecordFields> = {
-    [K in keyof F]: Codec.SerializedT<F[K]>;
+    [K in keyof F]: Codec.Serialized<F[K]>;
 };
 
 export class RecordCodec<F extends RecordFields> extends Codec<
@@ -41,26 +42,31 @@ export class RecordCodec<F extends RecordFields> extends Codec<
 
     private serdes = <I, O>(
         input: I,
-        fn: (codec: Codec.Like, x: any) => CodecResult<any>,
+        fn: (codec: Codec.Any, x: any) => CodecResult<any>,
     ): CodecResult<O> => {
         let cow = input as any;
         const isUndefined = Object.is(cow, undefined);
         if (isUndefined || Object.is(cow, null)) {
             const got = isUndefined ? 'undefined' : 'null';
             return Err(
-                new CodecError(`Expected an object but got ${got} instead`),
+                new CodecError(
+                    this,
+                    `Expected an object but got ${got} instead`,
+                ),
             );
         }
         for (const k of mergeKeys(this.args, cow)) {
             const f = this.args[k];
             if (f === undefined) {
-                return Err(new CodecError(`Unknown field "${k}"`));
+                return Err(new CodecError(this, `Unknown field "${k}"`));
             }
 
             const v = cow[k];
             const r = fn(f, v);
             if (r.isError) {
-                return r;
+                return Err(
+                    new CodecError(this, `Invalid field "${k}"`, r.error),
+                );
             }
             if (r.success !== v) {
                 if ((input as any) === cow) {
@@ -80,7 +86,7 @@ export class RecordCodec<F extends RecordFields> extends Codec<
         return this.serdes(parsed, (c, x) => c.serialize(x));
     }
 
-    getReference(subst?: Map<Codec.Like, number>): Reference {
+    getReference(subst?: Map<Codec.Any, number>): Reference {
         const args: ArgList = {};
         const ref: Reference = {
             type: 'Reference',
