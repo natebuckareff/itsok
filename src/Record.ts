@@ -33,11 +33,15 @@ export class RecordCodec<F extends RecordFields> extends Codec<
     RecordOutput<F>,
     RecordParsed<F>,
     RecordSerialized<F>,
-    F,
-    never
+    F
 > {
     constructor(fields: F) {
-        super('Record', fields);
+        super(
+            'Record',
+            fields,
+            input => this.serdes(input, (c, x) => c.parse(x)),
+            parsed => this.serdes(parsed, (c, x) => c.serialize(x)),
+        );
     }
 
     private serdes = <I, O>(
@@ -78,12 +82,10 @@ export class RecordCodec<F extends RecordFields> extends Codec<
         return Ok(cow);
     };
 
-    parse(input: unknown): CodecResult<RecordOutput<F>> {
-        return this.serdes(input, (c, x) => c.parse(x));
-    }
-
-    serialize(parsed: RecordParsed<F>): CodecResult<RecordSerialized<F>> {
-        return this.serdes(parsed, (c, x) => c.serialize(x));
+    visitArgs(visitor: (x: any, k?: number | string) => void) {
+        for (const k in this.args) {
+            visitor(this.args[k], k);
+        }
     }
 
     getReference(subst?: Map<Codec.Any, number>): Reference {
@@ -93,14 +95,20 @@ export class RecordCodec<F extends RecordFields> extends Codec<
             name: this.name,
             args,
         };
-        for (const k in this.args) {
-            const field = this.args[k];
-            if (subst && subst.has(field)) {
-                args[k] = { type: 'Param', param: subst.get(field)! };
+        this.visitArgs((arg, k) => {
+            if (subst && subst.has(arg)) {
+                args[k + ''] = { type: 'Param', param: subst.get(arg)! };
+            } else if (arg instanceof Codec) {
+                args[k + ''] = arg.getReference(subst);
             } else {
-                args[k] = field.getReference(subst);
+                const typename = typeof arg;
+                args[k + ''] = {
+                    type: 'Literal',
+                    kind: typename,
+                    value: arg,
+                };
             }
-        }
+        });
         return ref;
     }
 }

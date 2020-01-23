@@ -55,35 +55,36 @@ export class UnionCodec<Cs extends Codec.Any[]> extends Codec<
     UnionOutput<Cs>,
     UnionParsed<Cs>,
     UnionSerialized<Cs>,
-    Cs,
-    never
+    Cs
 > {
     constructor(codecs: Cs) {
-        super('Union', codecs);
-    }
-
-    parse(input: unknown): CodecResult<UnionOutput<Cs>> {
-        const [codec, ...codecs] = this.args;
-        let i = 0;
-        let r = codec.parse(input);
-        while (true) {
-            if (!r.isError || i >= codecs.length) {
-                break;
-            }
-            r = codecs[i].parse(input);
-            i += 1;
-        }
-        return r;
-    }
-
-    serialize(parsed: UnionParsed<Cs>): CodecResult<UnionSerialized<Cs>> {
-        // Try serializing with each codec until one returns a non-error result
-        const [codec, ...codecs] = this.args;
-        return until(
-            [codec, ...codecs],
-            x => x.serialize(parsed),
-            x => !x.isError,
-        ).slice(-1)[0];
+        super(
+            'Union',
+            codecs,
+            input => {
+                const [codec, ...codecs] = this.args;
+                let i = 0;
+                let r = codec.parse(input);
+                while (true) {
+                    if (!r.isError || i >= codecs.length) {
+                        break;
+                    }
+                    r = codecs[i].parse(input);
+                    i += 1;
+                }
+                return r;
+            },
+            parsed => {
+                // Try serializing with each codec until one returns a non-error
+                // result
+                const [codec, ...codecs] = this.args;
+                return until(
+                    [codec, ...codecs],
+                    x => x.serialize(parsed),
+                    x => !x.isError,
+                ).slice(-1)[0];
+            },
+        );
     }
 }
 

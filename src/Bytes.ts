@@ -2,10 +2,10 @@ import { Codec } from './Codec';
 import { Ok, Try } from './Result';
 import { Regex } from './Regex';
 
-// TODO Rename Bytes.ts -> Buffer.ts
-
-function _Buffer(encoding: BufferEncoding) {
-    return Codec.from(
+export function StringBuffer(encoding: BufferEncoding) {
+    type I = Buffer | string;
+    type O = Buffer;
+    return new Codec<I, O, O, string>(
         'Buffer',
         [encoding],
         input => {
@@ -23,7 +23,6 @@ function _Buffer(encoding: BufferEncoding) {
                 return Try(() => Buffer.from(input as any, encoding));
             }
         },
-        Ok,
+        o => Try(() => o.toString()),
     );
 }
-export { _Buffer as Buffer };

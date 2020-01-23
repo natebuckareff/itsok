@@ -1,16 +1,13 @@
-import { Codec, CodecResult } from './Codec';
+import { Codec, ParseFn } from './Codec';
 import { CodecError } from './CodecError';
 import { Ok, Err } from './Result';
-import { UnexpectedTypeError, ParsingError } from './Errors';
+import { UnexpectedTypeError } from './Errors';
 
-export function Primitive<T>(
-    name: string,
-    parse: (input: unknown, codec: PrimitiveCodec<T>) => CodecResult<T>,
-): PrimitiveCodec<T> {
-    return Codec.from<unknown, T, T, T>(name, [], parse, Ok);
+export function Primitive<T>(name: string, parse: ParseFn<unknown, T, T, T>) {
+    return new Codec(name, [], parse, Ok);
 }
 
-export type PrimitiveCodec<T> = Codec<unknown, T, T, T, any[], never>;
+export type PrimitiveCodec<T> = Codec<unknown, T, T, T>;
 
 export function Is<O>(value: O): PrimitiveCodec<O>;
 export function Is<O>(name: string, value: O): PrimitiveCodec<O>;
@@ -26,23 +23,20 @@ export function Is(arg1: any, arg2?: any) {
         value = arg2;
     }
 
-    return Primitive<any>(name, (x, codec) => {
+    return Primitive<any>(name, function(x) {
         return Object.is(x, value)
             ? Ok(x)
             : Err(
-                  new CodecError(
-                      codec,
-                      `Equality failed for ${value} and ${x}`,
-                  ),
+                  new CodecError(this, `Equality failed for ${value} and ${x}`),
               );
     });
 }
 
 function TypeOf<T>(name: string, typename: string) {
-    return Primitive<T>(name, (x, codec) => {
+    return Primitive<T>(name, function(x) {
         return typeof x === typename
             ? Ok(x as T)
-            : Err(new UnexpectedTypeError(codec, typename, x));
+            : Err(new UnexpectedTypeError(this, typename, x));
     });
 }
 

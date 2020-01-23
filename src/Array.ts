@@ -7,11 +7,20 @@ export class ArrayCode<C extends Codec.Any> extends Codec<
     Codec.Output<C>[],
     Codec.Parsed<C>[],
     Codec.Serialized<C>[],
-    [C],
-    never
+    [C]
 > {
     constructor(codec: C) {
-        super('Array', [codec]);
+        super(
+            'Array',
+            [codec],
+            input => {
+                if (!Array.isArray(input)) {
+                    return Err(new CodecError(this, 'Expected array'));
+                }
+                return this.serdes(input, this.codec.parse);
+            },
+            parsed => this.serdes(parsed, this.codec.parse),
+        );
     }
 
     get codec() {
@@ -44,17 +53,6 @@ export class ArrayCode<C extends Codec.Any> extends Codec<
         }
         return Ok(cow);
     };
-
-    parse(input: unknown): CodecResult<Codec.Output<C>[]> {
-        if (!Array.isArray(input)) {
-            return Err(new CodecError(this, 'Expected array'));
-        }
-        return this.serdes(input, x => this.codec.parse(x));
-    }
-
-    serialize(parsed: Codec.Parsed<C>[]): CodecResult<Codec.Serialized<C>[]> {
-        return this.serdes(parsed, x => this.codec.parse(x));
-    }
 }
 
 function _Array<C extends Codec.Any>(codec: C) {

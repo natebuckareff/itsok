@@ -10,18 +10,18 @@ export interface JsonMap {
 
 export interface JsonArray extends Array<AnyJson> {}
 
-export const Json = Codec.from<string, AnyJson, AnyJson, string>(
+export const Json = new Codec<string, AnyJson, AnyJson, string>(
     'Json',
     [],
-    (x, codec) => {
+    function(x) {
         return Try(
-            e => new CodecError(codec, `Failed to parse JSON`, e),
+            e => new CodecError(this, `Failed to parse JSON`, e),
             () => JSON.parse(x),
         );
     },
-    (x, codec) => {
+    function(x) {
         return Try(
-            e => new CodecError(codec, `Failed to serialize JSON`, e),
+            e => new CodecError(this, `Failed to serialize JSON`, e),
             () => JSON.stringify(x),
         );
     },

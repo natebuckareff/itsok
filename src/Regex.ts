@@ -5,15 +5,15 @@ import { Ok, Err } from './Result';
 import { String } from './Primitive';
 
 export function Regex(re: RegExp) {
-    return Codec.from<unknown, string, string, string, [RegExp]>(
+    return new Codec<unknown, string, string, string, [RegExp]>(
         'Regex',
         [re],
-        (u, codec) => {
+        function(u) {
             return String.parse(u).pipe(s => {
                 if (!re.test(s)) {
                     return Err(
                         new CodecError(
-                            codec,
+                            this,
                             `Regex pattern '${re.source}' failed to match '${s}'`,
                         ),
                     );
