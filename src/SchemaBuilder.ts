@@ -1,5 +1,6 @@
-import { CodecLike } from './Codec';
-import { SchemaDocument, Reference } from './SchemaDocument';
+import { AliasCodec } from './Alias';
+import { Codec } from './Codec';
+import { SchemaDocument, Definition } from './SchemaDocument';
 
 function topologicalSort<T, K>(deps: Map<T, Iterable<T>>, key: (x: T) => K) {
     const r: T[] = [];
@@ -32,52 +33,28 @@ function topologicalSort<T, K>(deps: Map<T, Iterable<T>>, key: (x: T) => K) {
 }
 
 export class SchemaBuilder {
-    private deps = new Map<string, Set<string>>();
-    private defs = new Map<string, CodecLike>();
+    public deps = new Map<string, Set<string>>();
+    public defs = new Map<string, Codec.Any>();
 
-    register<C extends CodecLike>(codec: C) {
-        if (codec.hasSchemaDefinition()) {
-            const exists = this.defs.get(codec.name);
-            if (exists !== undefined && exists !== codec) {
-                // Error when trying to re-register a codec with a different name
-                throw new Error(
-                    `Codec definition already exists for "${codec.name}"`,
-                );
-            } else {
-                // Add the definition for later code generation
-                this.defs.set(codec.name, codec);
+    register<C extends Codec.Any>(codec: C) {
+        // Can only register root aliases
+        if (codec instanceof AliasCodec) {
+            const name = codec.name;
+
+            // Already registered
+            if (this.defs.has(name)) {
+                return;
             }
 
-            // Make sure there is at least an empty depdency set so that `generate()` knows
-            // about our codec
-            if (!this.deps.has(codec.name)) {
-                this.deps.set(codec.name, new Set());
-            }
+            const s = new Set<string>();
+            this.defs.set(name, codec);
+            this.deps.set(name, s);
 
-            // Find all dependencies for this codec
-            for (const r of codec.getReferences()) {
-                this.addDependency(codec.name, r);
-            }
-        }
-    }
-
-    private addDependency<C extends CodecLike>(parent: string, codec: C) {
-        if (codec.hasSchemaDefinition()) {
-            this.defs.set(codec.name, codec);
-
-            let s = this.deps.get(parent);
-            if (s === undefined) {
-                s = new Set();
-                this.deps.set(parent, s);
-            }
-            s.add(codec.name);
-
-            for (const r of codec.getReferences()) {
-                this.addDependency(codec.name, r);
-            }
-        } else {
-            for (const r of codec.getReferences()) {
-                this.addDependency(parent, r);
+            for (const x of codec.getDependencies()) {
+                if (x instanceof AliasCodec) {
+                    s.add(x.name);
+                    this.register(x);
+                }
             }
         }
     }
@@ -109,18 +86,14 @@ export class SchemaBuilder {
             definitions: [],
         };
 
-        const refs = new Map<string, Reference>();
+        const defs = new Map<string, Definition>();
         for (const [name, codec] of this.defs) {
-            refs.set(name, codec.schemaDefinition());
+            defs.set(name, codec.getDefinition());
         }
 
         const sorted = topologicalSort(this.deps, x => x);
         for (const name of sorted) {
-            schema.definitions.push({
-                type: 'CodecDefinition',
-                name,
-                reference: refs.get(name)!,
-            });
+            schema.definitions.push(defs.get(name)!);
         }
 
         return schema;

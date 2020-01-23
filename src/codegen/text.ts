@@ -1,60 +1,126 @@
-/**
- * Abstract representation of indented text
- *
- * A string is a single line of text. An array of strings are multiple lines of
- * text at the same level of identation
- *
- * ```
- * > ["foo", "bar", "baz"]
- * foo
- * bar
- * baz
- * ```
- *
- * ```
- * > ["foo", ["bar", "baz"], "qux"]
- * foo
- *   bar
- *   baz
- * qux
- * ```
- */
+import { flat, collate, group } from './util';
 
-export type Text = string | Text[];
+export type Text = Token.Type | Block.Type;
 
-export function generateText(text: Text, depth: number = -1): string {
-    if (typeof text === 'string') {
-        return '    '.repeat(depth) + text;
-    } else {
-        const nextDepth = depth + 1;
-        return text.map(x => generateText(x, nextDepth)).join('\n');
+export const Block = (items: Text[], b?: Block.Type): Block.Type => ({
+    type: 'block',
+    tab: b && b.tab,
+    force: b && b.force,
+    items,
+});
+
+export namespace Block {
+    export interface Type {
+        type: 'block';
+        tab?: boolean;
+        force?: boolean;
+        items: Text[];
     }
 }
 
-export function prepend(str: string, text: Text): Text {
-    if (typeof text === 'string') {
-        return str + text;
-    } else {
-        return [prepend(str, text[0]), ...text.slice(1)];
+export const Token = (token: string): Token.Type => ({
+    type: 'token',
+    token,
+});
+
+export namespace Token {
+    export interface Type {
+        type: 'token';
+        token: string;
     }
 }
 
-export function append(text: Text, str: string): Text {
-    if (typeof text === 'string') {
-        return text + str;
+export const Tab = (items: Text[], force: boolean = false): Block.Type => ({
+    type: 'block',
+    tab: true,
+    force,
+    items,
+});
+
+function isDelim(text: Text): boolean {
+    return text.type === 'token' && (text.token === ', ' || text.token === ';');
+}
+
+// Group tokens into single lines lines and lift terminator tokens into adjacent
+// blocks
+export function condense(text: Text): Text {
+    if (text.type === 'token') {
+        return text;
     } else {
-        return [...text.slice(0, -1), append(text[text.length - 1], str)];
+        // group together delimited items
+        const g = group(text.items, x => isDelim(x));
+
+        // collapse each group into single tokens
+        const c = g.map(xs => {
+            return collate(
+                xs,
+                (state, x) => {
+                    // Only reduce adjacent tokens, and blocks followed by delimiter tokens
+                    // prettier-ignore
+                    return (
+                        (state.type === 'token' && x.type === 'token') ||
+                        (state.type === 'block' && isDelim(x))
+                    );
+                },
+                (state, x) => {
+                    if (state.type === 'token' && x.type === 'token') {
+                        return Token(state.token + x.token);
+                    } else {
+                        // If a token follows an adjacent block lift the token into the block's items
+                        const block = state as Block.Type;
+                        return Block([...block.items, x], block);
+                    }
+                },
+            );
+        });
+        return Block(flat(c).map(condense), text);
     }
 }
 
-export function wrap(a: string, text: Text, b: string): Text {
-    if (typeof text === 'string') {
-        return a + text + b;
-    } else if (text.length === 1) {
-        return [wrap(a, text[0], b)];
+// Propogate multiline blocks
+export function unwrap(text: Text): boolean {
+    if (text.type === 'token') {
+        return false;
+    } else if (text.type === 'block') {
+        let tab = false;
+        for (const x of text.items) {
+            if (unwrap(x)) {
+                tab = true;
+            }
+        }
+        if (tab || text.tab) {
+            text.tab = true;
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+export function compile(
+    text: Text,
+    depth: number = -1,
+    tab: boolean = false,
+): string {
+    if (text.type === 'token') {
+        if (tab) {
+            return '    '.repeat(depth) + text.token + '\n';
+        } else {
+            return text.token;
+        }
     } else {
-        const x = prepend(a, text[0]);
-        const y = append(text[text.length - 1], b);
-        return [x, ...text.slice(1, -1), y];
+        let r = '';
+        for (const x of text.items) {
+            const t = text.type === 'block' && text.tab;
+            const d = depth + 1;
+            r += compile(x, d, t);
+        }
+
+        // If the parent of this block is tabbed, but this block isn't then
+        // its items are rendered on a single line and need to be tabbed
+        if (tab && !text.tab) {
+            r = '    '.repeat(depth + 1) + r + '\n';
+        }
+        return r;
     }
 }
