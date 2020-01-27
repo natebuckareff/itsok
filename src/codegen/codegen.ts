@@ -2,13 +2,17 @@ import * as Schema from '../SchemaDocument';
 import { Text, Token, Block, Tab, condense, unwrap, compile } from './text';
 import { flat, intersperse } from './util';
 
+export function codegen(...args: Parameters<typeof codegen.codegen>) {
+    return codegen.codegen(...args);
+}
+
 export namespace codegen {
     interface State {
         subst: Schema.ParamList;
         defs: Map<string, any>;
     }
 
-    export function schema(schema: Schema.SchemaDocument) {
+    export function codegen(schema: Schema.SchemaDocument) {
         const state: State = {
             subst: [],
             defs: new Map(),
