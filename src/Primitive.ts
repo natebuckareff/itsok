@@ -3,7 +3,10 @@ import { CodecError } from './CodecError';
 import { Ok, Err } from './Result';
 import { UnexpectedTypeError } from './Errors';
 
-export function Primitive<T>(name: string, parse: ParseFn<unknown, T, T, T>) {
+export function Primitive<T>(
+    name: string,
+    parse: ParseFn<unknown, T, T, T>,
+): PrimitiveCodec<T> {
     return new Codec(name, null, parse, Ok);
 }
 
