@@ -4,7 +4,7 @@ import { Ok, Err } from './Result';
 import { UnexpectedTypeError } from './Errors';
 
 export function Primitive<T>(name: string, parse: ParseFn<unknown, T, T, T>) {
-    return new Codec(name, [], parse, Ok);
+    return new Codec(name, null, parse, Ok);
 }
 
 export type PrimitiveCodec<T> = Codec<unknown, T, T, T>;
