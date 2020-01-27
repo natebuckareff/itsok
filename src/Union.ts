@@ -1,4 +1,4 @@
-import { Codec, CodecResult } from './Codec';
+import { Codec } from './Codec';
 
 interface EmbeddedTuple<ArgsT extends any[]> {
     arr: ArgsT;
