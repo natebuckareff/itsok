@@ -7,7 +7,7 @@ export function Primitive<T>(
     name: string,
     parse: ParseFn<unknown, T, T, T>,
 ): PrimitiveCodec<T> {
-    return new Codec(name, null, parse, Ok);
+    return new Codec(name, undefined, parse, Ok);
 }
 
 export type PrimitiveCodec<T> = Codec<unknown, T, T, T>;
