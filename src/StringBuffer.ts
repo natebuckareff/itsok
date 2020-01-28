@@ -6,7 +6,7 @@ export function StringBuffer(encoding: BufferEncoding) {
     type I = Buffer | string;
     type O = Buffer;
     return new Codec<I, O, O, string>(
-        'Buffer',
+        'StringBuffer',
         [encoding],
         input => {
             if (Buffer.isBuffer(input)) {
