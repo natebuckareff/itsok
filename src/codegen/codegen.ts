@@ -138,9 +138,10 @@ export namespace codegen {
             open = '({';
             close = '})';
         }
+        const factory = open === '(' ? Block : Tab;
         if (ref.args) {
             yield Token(open);
-            yield Block([...argumentList(ref.args, state)]);
+            yield factory([...argumentList(ref.args, state)]);
             yield Token(close);
         }
     }
