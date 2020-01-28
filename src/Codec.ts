@@ -166,6 +166,7 @@ export class Codec<I, O, P, S, Args = any, Ref extends Codec.Any = any> {
     }
 }
 
+// TODO Should these be removed in favor of `Codec['X']`?
 export namespace Codec {
     export type Input<C> = C extends Any ? C['I'] : never;
     export type Output<C> = C extends Any ? C['O'] : never;
