@@ -65,7 +65,7 @@ export namespace codegen {
         const x = ref[ref.length - 1] as Token.Type;
 
         yield Block([
-            Token(`export const ${def.name} = Alias(`),
+            Token(`export const ${def.name} = iok.Alias(`),
             Tab([
                 Token(`"${def.name}"`),
                 Token(', '),
@@ -110,7 +110,7 @@ export namespace codegen {
         yield Block([
             Token(`export const ${def.name} = <${typeArgs}>(${funcArgs}) => {`),
             Tab([
-                Token('return Alias('),
+                Token('return iok.Alias('),
                 Block(flat(intersperse(aliasArgsText, [Token(', ')]))),
                 Token(')'),
             ]),
