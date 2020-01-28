@@ -64,9 +64,14 @@ export namespace codegen {
         const xs = ref.slice(0, -1);
         const x = ref[ref.length - 1] as Token.Type;
 
-        yield Tab([
-            Token(`export const ${def.name} = `),
-            ...[...xs, Token(x.token + ';')],
+        yield Block([
+            Token(`export const ${def.name} = Alias(`),
+            Tab([
+                Token(`"${def.name}"`),
+                Token(', '),
+                ...[...xs, Token(x.token)],
+            ]),
+            Token(');'),
         ]);
         yield definitionNamepsace(def.name);
     }
@@ -125,10 +130,18 @@ export namespace codegen {
 
     function* reference(ref: Schema.Reference, state: State): Iterable<Text> {
         yield Token(resolve(ref.name, state));
+        let open, close;
+        if (Array.isArray(ref.args)) {
+            open = '(';
+            close = ')';
+        } else {
+            open = '({';
+            close = '})';
+        }
         if (ref.args) {
-            yield Token('(');
+            yield Token(open);
             yield Block([...argumentList(ref.args, state)]);
-            yield Token(')');
+            yield Token(close);
         }
     }
 
@@ -154,7 +167,7 @@ export namespace codegen {
 
     function* argument(arg: Schema.Arg, state: State): Iterable<Text> {
         if (arg.type === 'Literal') {
-            yield Token('LITERAL');
+            yield Token(JSON.stringify(arg.value));
         } else if (arg.type === 'Param') {
             yield Token(`arg${arg.param}`);
         } else {

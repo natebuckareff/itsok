@@ -1,5 +1,7 @@
 import { flat, collate, group } from './util';
 
+// TODO calculate line lengths and force `Tab` when it goes over a threshold
+
 export type Text = Token.Type | Block.Type;
 
 export const Block = (items: Text[], b?: Block.Type): Block.Type => ({
