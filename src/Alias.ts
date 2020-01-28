@@ -1,6 +1,7 @@
 import { Codec, CodecResult } from './Codec';
 import { Err } from './Result';
 import { ParsingError, SerializationError } from './Errors';
+import { Definition, ParamList, Reference, ArgList } from './SchemaDocument';
 
 export class AliasCodec<C extends Codec.Any> extends Codec<
     C['I'],
@@ -9,6 +10,8 @@ export class AliasCodec<C extends Codec.Any> extends Codec<
     C['S'],
     C['Args']
 > {
+    private _noArgs: boolean;
+
     constructor(alias: string, args: C['Args'], public codec: C) {
         super(
             alias,
@@ -18,6 +21,7 @@ export class AliasCodec<C extends Codec.Any> extends Codec<
             codec.serialize,
             codec,
         );
+        this._noArgs = args === undefined;
     }
 
     parse = (input: Codec.Input<C>): CodecResult<Codec.Output<C>> => {
@@ -35,6 +39,35 @@ export class AliasCodec<C extends Codec.Any> extends Codec<
         }
         return r;
     };
+
+    getDefinition(): Definition {
+        if (this._noArgs) {
+            const subst = new Map<Codec.Any, number>();
+            const def: Definition = {
+                type: 'Definition',
+                name: this.name,
+
+                // `this.ref!` because `!this.hasDefinition()` guarantees that `this.ref` is
+                // defined
+                reference: this.ref!.getReference(subst),
+            };
+            return def;
+        } else {
+            return super.getDefinition();
+        }
+    }
+
+    getReference(subst?: Map<Codec.Any, number>): Reference {
+        if (this._noArgs) {
+            const ref: Reference = {
+                type: 'Reference',
+                name: this.name,
+            };
+            return ref;
+        } else {
+            return super.getReference(subst);
+        }
+    }
 }
 
 export function Alias<C extends Codec.Any, Args extends any[]>(

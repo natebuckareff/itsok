@@ -86,7 +86,7 @@ export namespace codegen {
         nextState.subst = params;
 
         const typeArgs = params
-            .map((_, i) => `C${i} extends iok.Codec.Like`)
+            .map((_, i) => `C${i} extends iok.Codec.Any`)
             .join(', ');
 
         const funcArgs = params
