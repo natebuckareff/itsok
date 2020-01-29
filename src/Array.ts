@@ -19,7 +19,7 @@ export class ArrayCode<C extends Codec.Any> extends Codec<
                 }
                 return this.serdes(input, this.codec.parse);
             },
-            parsed => this.serdes(parsed, this.codec.parse),
+            parsed => this.serdes(parsed, this.codec.serialize),
         );
     }
 
