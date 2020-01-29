@@ -9,13 +9,13 @@ export function codegen(...args: Parameters<typeof codegen.codegen>) {
 export namespace codegen {
     interface State {
         subst: Schema.ParamList;
-        defs: Map<string, any>;
+        schema: Schema.SchemaDocument;
     }
 
     export function codegen(schema: Schema.SchemaDocument) {
         const state: State = {
             subst: [],
-            defs: new Map(),
+            schema,
         };
 
         const defs: Block.Type[] = [];
@@ -121,7 +121,7 @@ export namespace codegen {
     }
 
     function resolve(name: string, state: State): string {
-        if (state.defs.has(name)) {
+        if (name in state.schema.definitions) {
             return name;
         } else {
             return `iok.${name}`;
