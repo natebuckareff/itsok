@@ -6,7 +6,7 @@ function _Buffer(encoding: BufferEncoding) {
     type I = Buffer | string;
     type O = Buffer;
     return new Codec<I, O, O, string>(
-        'StringBuffer',
+        'Buffer',
         [encoding],
         input => {
             if (Buffer.isBuffer(input)) {
@@ -32,7 +32,7 @@ export type StringEncoding = 'hex' | 'base64' | 'uri';
 
 export function EncodedString(encoding: StringEncoding) {
     return new Codec<string, string, string, string>(
-        'StringBuffer',
+        'EncodedString',
         [encoding],
         i => {
             if (encoding === 'uri') {
