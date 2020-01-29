@@ -12,6 +12,16 @@ export function Primitive<T>(
 
 export type PrimitiveCodec<T> = Codec<unknown, T, T, T>;
 
+export function InstanceOf<O>(
+    ctor: new (...args: any[]) => O,
+): PrimitiveCodec<O> {
+    return Primitive<O>('InstanceOf', function(i) {
+        return i instanceof ctor
+            ? Ok(i)
+            : Err(new CodecError(this, `Expected instance of "${ctor.name}"`));
+    });
+}
+
 export function Is<O>(value: O): PrimitiveCodec<O>;
 export function Is<O>(name: string, value: O): PrimitiveCodec<O>;
 export function Is(arg1: any, arg2?: any) {
