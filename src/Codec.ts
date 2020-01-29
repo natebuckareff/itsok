@@ -70,7 +70,7 @@ export class Codec<I, O, P, S, Args = any, Ref extends Codec.Any = any> {
     }
 
     check(cond: (o: O) => boolean) {
-        return new Codec<I, O, P, S, Args>(
+        return new Codec<I, O, P, S, Args, Ref>(
             '_check',
             this.args,
             i => {
@@ -164,6 +164,17 @@ export class Codec<I, O, P, S, Args = any, Ref extends Codec.Any = any> {
         }
         return ref;
     }
+}
+
+export function _pipe<A extends Codec.Any, B extends Codec.Any>(a: A, b: B) {
+    return a.pipe(b);
+}
+
+export function _check<C extends Codec.Any>(
+    codec: C,
+    cond: (o: C['O']) => boolean,
+) {
+    return codec.check(cond);
 }
 
 // TODO Should these be removed in favor of `Codec['X']`?
