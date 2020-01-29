@@ -23,7 +23,7 @@ function _Buffer(encoding: BufferEncoding) {
                 return Try(() => Buffer.from(input as any, encoding));
             }
         },
-        o => Try(() => o.toString()),
+        o => Try(() => o.toString(encoding)),
     );
 }
 export { _Buffer as Buffer };
