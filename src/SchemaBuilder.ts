@@ -56,6 +56,8 @@ export class SchemaBuilder {
                     this.register(x);
                 }
             }
+        } else {
+            throw new Error(`Cannot register unaliased codec "${codec.name}"`);
         }
     }
 
