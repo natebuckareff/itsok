@@ -82,6 +82,15 @@ export class Codec<I, O, P, S, Args = any, Ref extends Codec.Any = any> {
         );
     }
 
+    dropParse() {
+        return new Codec<I, I, P, S, Args, Ref>(
+            '_dropParse',
+            this.args,
+            Ok,
+            this.serialize as any,
+        );
+    }
+
     getDependencies(): Codec.Any[] {
         const deps: Codec.Any[] = [];
 
@@ -175,6 +184,10 @@ export function _check<C extends Codec.Any>(
     cond: (o: C['O']) => boolean,
 ) {
     return codec.check(cond);
+}
+
+export function _dropParse<C extends Codec.Any>(codec: C) {
+    return codec.dropParse();
 }
 
 // TODO Should these be removed in favor of `Codec['X']`?
