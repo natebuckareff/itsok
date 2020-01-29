@@ -2,7 +2,7 @@ import { Codec } from './Codec';
 import { Ok, Try } from './Result';
 import { Regex } from './Regex';
 
-export function StringBuffer(encoding: BufferEncoding) {
+function _Buffer(encoding: BufferEncoding) {
     type I = Buffer | string;
     type O = Buffer;
     return new Codec<I, O, O, string>(
@@ -24,5 +24,29 @@ export function StringBuffer(encoding: BufferEncoding) {
             }
         },
         o => Try(() => o.toString()),
+    );
+}
+export { _Buffer as Buffer };
+
+export type StringEncoding = 'hex' | 'base64' | 'uri';
+
+export function EncodedString(encoding: StringEncoding) {
+    return new Codec<string, string, string, string>(
+        'StringBuffer',
+        [encoding],
+        i => {
+            if (encoding === 'uri') {
+                return Try(() => decodeURIComponent(i));
+            } else {
+                return Try(() => Buffer.from(i, encoding).toString('utf-8'));
+            }
+        },
+        o => {
+            if (encoding === 'uri') {
+                return Try(() => encodeURIComponent(o));
+            } else {
+                return Try(() => Buffer.from(o, 'utf-8').toString(encoding));
+            }
+        },
     );
 }

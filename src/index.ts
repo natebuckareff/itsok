@@ -1,6 +1,6 @@
 export * from './Alias';
 export * from './Array';
-export * from './StringBuffer';
+export * from './Buffer';
 export * from './Codec';
 export * from './CodecError';
 export * from './Errors';
