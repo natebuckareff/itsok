@@ -159,6 +159,12 @@ export class Codec<I, O, P, S, Args = any, Ref extends Codec.Any = any> {
                 args.push({ type: 'Param', param: subst.get(arg)! });
             } else if (arg instanceof Codec) {
                 args.push(arg.getReference(subst));
+            } else if (arg instanceof Const) {
+                args.push({
+                    type: 'Literal',
+                    kind: 'const',
+                    value: arg.value,
+                });
             } else {
                 const typename = typeof arg;
                 args.push({
@@ -173,6 +179,11 @@ export class Codec<I, O, P, S, Args = any, Ref extends Codec.Any = any> {
         }
         return ref;
     }
+}
+
+// Hack for `Is` codegen
+export class Const<T> {
+    constructor(public value: T) {}
 }
 
 export function _pipe<A extends Codec.Any, B extends Codec.Any>(a: A, b: B) {

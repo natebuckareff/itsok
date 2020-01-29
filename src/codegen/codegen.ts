@@ -9,13 +9,13 @@ export function codegen(...args: Parameters<typeof codegen.codegen>) {
 export namespace codegen {
     interface State {
         subst: Schema.ParamList;
-        schema: Schema.SchemaDocument;
+        defs: Set<string>;
     }
 
     export function codegen(schema: Schema.SchemaDocument) {
         const state: State = {
             subst: [],
-            schema,
+            defs: new Set(schema.definitions.map(x => x.name)),
         };
 
         const defs: Block.Type[] = [];
@@ -121,7 +121,7 @@ export namespace codegen {
     }
 
     function resolve(name: string, state: State): string {
-        if (name in state.schema.definitions) {
+        if (state.defs.has(name)) {
             return name;
         } else {
             return `iok.${name}`;
@@ -168,7 +168,12 @@ export namespace codegen {
 
     function* argument(arg: Schema.Arg, state: State): Iterable<Text> {
         if (arg.type === 'Literal') {
-            yield Token(JSON.stringify(arg.value));
+            const value = JSON.stringify(arg.value);
+            if (arg.kind === 'const') {
+                yield Token(`${value} as const`);
+            } else {
+                yield Token(value);
+            }
         } else if (arg.type === 'Param') {
             yield Token(`arg${arg.param}`);
         } else {
