@@ -116,8 +116,6 @@ export namespace codegen {
             ]),
             Token('}'),
         ]);
-
-        yield definitionNamepsace(def.name);
     }
 
     function resolve(name: string, state: State): string {
