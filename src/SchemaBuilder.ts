@@ -39,7 +39,8 @@ export class SchemaBuilder {
     register<C extends Codec.Any>(codec: C) {
         // Can only register root aliases
         if (codec instanceof AliasCodec) {
-            const name = codec.name;
+            const prereg = codec.register();
+            const name = prereg.name;
 
             // Already registered
             if (this.defs.has(name)) {
@@ -47,10 +48,10 @@ export class SchemaBuilder {
             }
 
             const s = new Set<string>();
-            this.defs.set(name, codec);
+            this.defs.set(name, prereg);
             this.deps.set(name, s);
 
-            for (const x of codec.getDependencies()) {
+            for (const x of prereg.getDependencies()) {
                 if (x instanceof AliasCodec) {
                     s.add(x.name);
                     this.register(x);

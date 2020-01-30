@@ -12,7 +12,7 @@ export class AliasCodec<C extends Codec.Any> extends Codec<
 > {
     private _noArgs: boolean;
 
-    constructor(alias: string, args: C['Args'], public codec: C) {
+    constructor(public alias: string, args: C['Args'], public codec: C) {
         super(
             alias,
             // If args is not explicitly passed in then forward the codec's args
@@ -39,6 +39,20 @@ export class AliasCodec<C extends Codec.Any> extends Codec<
         }
         return r;
     };
+
+    public schemaOverride?: (codec: C) => Codec.Any;
+
+    register() {
+        if (this.schemaOverride) {
+            return new AliasCodec(
+                this.alias,
+                this._noArgs ? undefined : this.args,
+                this.schemaOverride(this.codec),
+            );
+        } else {
+            return this;
+        }
+    }
 
     getDefinition(): Definition {
         if (this._noArgs) {

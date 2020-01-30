@@ -66,6 +66,7 @@ export class Codec<I, O, P, S, Args = any, Ref extends Codec.Any = any> {
             [this, codec],
             i => this.parse(i).pipe(codec.parse),
             p => codec.serialize(p).pipe(this.serialize),
+            this.ref,
         );
     }
 
@@ -79,15 +80,17 @@ export class Codec<I, O, P, S, Args = any, Ref extends Codec.Any = any> {
                 );
             },
             this.serialize,
+            this.ref,
         );
     }
 
     dropParse() {
-        return new Codec<I, I, P, S, Args, Ref>(
+        return new Codec<I, I, P, S>(
             '_dropParse',
-            this.args,
+            [this],
             Ok,
             this.serialize as any,
+            this.ref,
         );
     }
 

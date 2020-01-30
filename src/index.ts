@@ -10,6 +10,7 @@ export * from './Option';
 export * from './Primitive';
 export * from './Record';
 export * from './Regex';
+export * from './Response';
 export * from './Result';
 export * from './SchemaBuilder';
 export * from './SchemaDocument';
