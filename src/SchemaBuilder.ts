@@ -62,18 +62,23 @@ export class SchemaBuilder {
         }
     }
 
-    static validateNoConflicts(a: SchemaBuilder, b: SchemaBuilder) {
-        for (const [name, codec] of a.defs) {
-            if (b.defs.has(name) && codec !== b.defs.get(name)) {
-                throw new Error(`Schema merge conflict for "${name}"`);
-            }
-        }
-    }
+    // TODO XXX
+    // Until we have `Codec.equals` for doing a correct comparison it doesn't
+    // make sense to do a shallow one. It breaks things like `Option` being
+    // included into multiple schemas
+    // ~
+    // static validateNoConflicts(a: SchemaBuilder, b: SchemaBuilder) {
+    //     for (const [name, codec] of a.defs) {
+    //         if (b.defs.has(name) && codec !== b.defs.get(name)) {
+    //             throw new Error(`Schema merge conflict for "${name}"`);
+    //         }
+    //     }
+    // }
 
     static merge(a: SchemaBuilder, b: SchemaBuilder) {
         const merged = new SchemaBuilder();
-        SchemaBuilder.validateNoConflicts(a, b);
-        SchemaBuilder.validateNoConflicts(b, a);
+        // SchemaBuilder.validateNoConflicts(a, b);
+        // SchemaBuilder.validateNoConflicts(b, a);
 
         // Merge definitions
         for (const [name, codec] of a.defs) {
