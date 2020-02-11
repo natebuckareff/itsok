@@ -102,7 +102,6 @@ export class SchemaBuilder {
                 merged.deps.set(name, deps);
             }
         }
-
         return merged;
     }
 

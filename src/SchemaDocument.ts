@@ -26,4 +26,5 @@ export interface Literal {
     type: 'Literal';
     kind: string;
     value: any;
+    const?: boolean;
 }
