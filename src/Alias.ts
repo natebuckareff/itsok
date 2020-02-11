@@ -1,7 +1,7 @@
 import { Codec, CodecResult } from './Codec';
+import { Definition, Reference } from './SchemaDocument';
 import { Err } from './Result';
 import { ParsingError, SerializationError } from './Errors';
-import { Definition, ParamList, Reference, ArgList } from './SchemaDocument';
 
 export class AliasCodec<C extends Codec.Any> extends Codec<
     C['I'],
