@@ -1,33 +1,30 @@
-import { Codec, CodecResult, CodecError } from './Codec';
-import { CodecReference } from './SchemaDocument';
+import { Codec, ParseFn, Const } from './Codec';
+import { CodecError } from './CodecError';
 import { Ok, Err } from './Result';
-import { GenericCodec } from './GenericCodec';
+import { UnexpectedTypeError } from './Errors';
 
-export class CodecUnexpectedTypeError extends CodecError {
-    constructor(expected: string, actual: any) {
-        super(`Expected type ${expected}, got ${typeof actual}`);
-        this.name = 'CodecUnexpectedTypeError';
-    }
+export function Primitive<T, Args = undefined>(
+    name: string,
+    parse: ParseFn<unknown, T, T, T>,
+    args?: Args,
+): PrimitiveCodec<T, Args> {
+    return new Codec(name, args as any, parse, Ok);
 }
 
-export class PrimitiveCodec<I, O> extends Codec<I, O, O> {
-    constructor(
-        public readonly name: string,
-        public readonly parse: (i: I) => CodecResult<O>,
-    ) {
-        super(name, parse, Ok);
-    }
+export type PrimitiveCodec<T, Args = undefined> = Codec<unknown, T, T, T, Args>;
 
-    schema(): CodecReference {
-        return {
-            type: 'CodecReference',
-            name: this.name,
-        };
-    }
+export function InstanceOf<O>(
+    ctor: new (...args: any[]) => O,
+): PrimitiveCodec<O> {
+    return Primitive<O>('InstanceOf', function(i) {
+        return i instanceof ctor
+            ? Ok(i)
+            : Err(new CodecError(this, `Expected instance of "${ctor.name}"`));
+    });
 }
 
-export function Is<O>(value: O): GenericCodec<unknown, O, O, [O]>;
-export function Is<O>(name: string, value: O): GenericCodec<unknown, O, O, [O]>;
+export function Is<O>(value: O): PrimitiveCodec<O, O>;
+export function Is<O>(name: string, value: O): PrimitiveCodec<O, O>;
 export function Is(arg1: any, arg2?: any) {
     let name: string;
     let value: any;
@@ -40,27 +37,31 @@ export function Is(arg1: any, arg2?: any) {
         value = arg2;
     }
 
-    return new GenericCodec(
+    return Primitive<any, any>(
         name,
-        [value],
-        u => {
-            return Object.is(u, value)
-                ? Ok(u)
-                : Err(new CodecError(`Equality failed for ${value} and ${u}`));
+        function(x) {
+            return Object.is(x, value)
+                ? Ok(x)
+                : Err(
+                      new CodecError(
+                          this,
+                          `Equality failed for ${value} and ${x}`,
+                      ),
+                  );
         },
-        Ok,
+        [new Const(value)],
     );
 }
 
-export function TypeOf<O>(name: string, type: string) {
-    return new PrimitiveCodec<unknown, O>(name, u => {
-        return typeof u === type
-            ? Ok(u as O)
-            : Err(new CodecUnexpectedTypeError(name, u));
+function TypeOf<T>(name: string, typename: string) {
+    return Primitive<T>(name, function(x) {
+        return typeof x === typename
+            ? Ok(x as T)
+            : Err(new UnexpectedTypeError(this, typename, x));
     });
 }
 
-export const Any = new PrimitiveCodec<unknown, any>('Any', Ok);
+export const Any = Primitive<any>('Any', Ok);
 export const Null = Is('Null', null);
 export const Undefined = TypeOf<undefined>('Undefined', 'undefined');
 export const Boolean = TypeOf<boolean>('Boolean', 'boolean');

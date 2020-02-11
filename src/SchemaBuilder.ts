@@ -1,5 +1,6 @@
-import { CodecLike } from './Codec';
-import { SchemaDocument, Reference } from './SchemaDocument';
+import { AliasCodec } from './Alias';
+import { Codec } from './Codec';
+import { SchemaDocument, Definition } from './SchemaDocument';
 
 function topologicalSort<T, K>(deps: Map<T, Iterable<T>>, key: (x: T) => K) {
     const r: T[] = [];
@@ -32,70 +33,54 @@ function topologicalSort<T, K>(deps: Map<T, Iterable<T>>, key: (x: T) => K) {
 }
 
 export class SchemaBuilder {
-    private deps = new Map<string, Set<string>>();
-    private defs = new Map<string, CodecLike>();
+    public deps = new Map<string, Set<string>>();
+    public defs = new Map<string, Codec.Any>();
 
-    register<C extends CodecLike>(codec: C) {
-        if (codec.hasSchemaDefinition()) {
-            const exists = this.defs.get(codec.name);
-            if (exists !== undefined && exists !== codec) {
-                // Error when trying to re-register a codec with a different name
-                throw new Error(
-                    `Codec definition already exists for "${codec.name}"`,
-                );
-            } else {
-                // Add the definition for later code generation
-                this.defs.set(codec.name, codec);
+    register<C extends Codec.Any>(codec: C) {
+        // Can only register root aliases
+        if (codec instanceof AliasCodec) {
+            const prereg = codec.register();
+            const name = prereg.name;
+
+            // Already registered
+            if (this.defs.has(name)) {
+                return;
             }
 
-            // Make sure there is at least an empty depdency set so that `generate()` knows
-            // about our codec
-            if (!this.deps.has(codec.name)) {
-                this.deps.set(codec.name, new Set());
-            }
+            const s = new Set<string>();
+            this.defs.set(name, prereg);
+            this.deps.set(name, s);
 
-            // Find all dependencies for this codec
-            for (const r of codec.getReferences()) {
-                this.addDependency(codec.name, r);
-            }
-        }
-    }
-
-    private addDependency<C extends CodecLike>(parent: string, codec: C) {
-        if (codec.hasSchemaDefinition()) {
-            this.defs.set(codec.name, codec);
-
-            let s = this.deps.get(parent);
-            if (s === undefined) {
-                s = new Set();
-                this.deps.set(parent, s);
-            }
-            s.add(codec.name);
-
-            for (const r of codec.getReferences()) {
-                this.addDependency(codec.name, r);
+            for (const x of prereg.getDependencies()) {
+                if (x instanceof AliasCodec) {
+                    s.add(x.name);
+                    this.register(x);
+                }
             }
         } else {
-            for (const r of codec.getReferences()) {
-                this.addDependency(parent, r);
-            }
+            throw new Error(`Cannot register unaliased codec "${codec.name}"`);
         }
     }
 
-    static validateNoConflicts(a: SchemaBuilder, b: SchemaBuilder) {
-        for (const [name, codec] of a.defs) {
-            if (b.defs.has(name) && codec !== b.defs.get(name)) {
-                throw new Error(`Schema merge conflict for "${name}"`);
-            }
-        }
-    }
+    // TODO XXX
+    // Until we have `Codec.equals` for doing a correct comparison it doesn't
+    // make sense to do a shallow one. It breaks things like `Option` being
+    // included into multiple schemas
+    // ~
+    // static validateNoConflicts(a: SchemaBuilder, b: SchemaBuilder) {
+    //     for (const [name, codec] of a.defs) {
+    //         if (b.defs.has(name) && codec !== b.defs.get(name)) {
+    //             throw new Error(`Schema merge conflict for "${name}"`);
+    //         }
+    //     }
+    // }
 
     static merge(a: SchemaBuilder, b: SchemaBuilder) {
         const merged = new SchemaBuilder();
-        SchemaBuilder.validateNoConflicts(a, b);
-        SchemaBuilder.validateNoConflicts(b, a);
+        // SchemaBuilder.validateNoConflicts(a, b);
+        // SchemaBuilder.validateNoConflicts(b, a);
 
-        // merge definitions
+        // Merge definitions
         for (const [name, codec] of a.defs) {
             merged.defs.set(name, codec);
         }
@@ -103,7 +88,7 @@ export class SchemaBuilder {
             merged.defs.set(name, codec);
         }
 
-        // merge dependencies
+        // Merge dependencies
         for (const [name, deps] of a.deps) {
             merged.deps.set(name, deps);
         }
@@ -126,18 +111,14 @@ export class SchemaBuilder {
             definitions: [],
         };
 
-        const refs = new Map<string, Reference>();
+        const defs = new Map<string, Definition>();
         for (const [name, codec] of this.defs) {
-            refs.set(name, codec.schemaDefinition());
+            defs.set(name, codec.getDefinition());
         }
 
         const sorted = topologicalSort(this.deps, x => x);
         for (const name of sorted) {
-            schema.definitions.push({
-                type: 'CodecDefinition',
-                name,
-                reference: refs.get(name)!,
-            });
+            schema.definitions.push(defs.get(name)!);
         }
 
         return schema;

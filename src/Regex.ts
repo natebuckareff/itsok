@@ -1,18 +1,19 @@
 import { Alias } from './Alias';
-import { CodecError } from './Codec';
-import { GenericCodec } from './GenericCodec';
+import { Codec } from './Codec';
+import { CodecError } from './CodecError';
 import { Ok, Err } from './Result';
 import { String } from './Primitive';
 
 export function Regex(re: RegExp) {
-    return new GenericCodec<unknown, string, string, [string]>(
-        `Regex`,
-        [re.source],
-        u => {
+    return new Codec<unknown, string, string, string, [RegExp]>(
+        'Regex',
+        [re],
+        function(u) {
             return String.parse(u).pipe(s => {
                 if (!re.test(s)) {
                     return Err(
                         new CodecError(
+                            this,
                             `Regex pattern '${re.source}' failed to match '${s}'`,
                         ),
                     );

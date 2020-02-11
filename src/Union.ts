@@ -1,20 +1,4 @@
-import { Codec, CodecLike } from './Codec';
-import { GenericCodec } from './GenericCodec';
-
-export type Unionize<T extends any[]> = T[number];
-
-export type UnionOutputTuple<T extends any[]> = {
-    [K in keyof T]: T[K] extends Codec<any, infer O> ? O : any;
-};
-
-export type UnionSerializedTuple<T extends any[]> = {
-    [K in keyof T]: T[K] extends Codec<any, any, infer S> ? S : any;
-};
-
-export type UnionOutput<T extends any[]> = Unionize<UnionOutputTuple<T>>;
-export type UnionSerialized<T extends any[]> = Unionize<
-    UnionSerializedTuple<T>
->;
+import { Codec } from './Codec';
 
 interface EmbeddedTuple<ArgsT extends any[]> {
     arr: ArgsT;
@@ -28,13 +12,6 @@ type EmbeddedCons<T, SubArgsT extends any[]> = ((
     : never;
 
 type Cons<T, Ts extends any[]> = EmbeddedCons<T, Ts>['arr'];
-
-export type UnionCodec<CS extends CodecLike[]> = GenericCodec<
-    unknown,
-    UnionOutput<CS>,
-    UnionSerialized<CS>,
-    CS
->;
 
 // TODO Move to a utility file
 function until<A, B>(
@@ -53,37 +30,67 @@ function until<A, B>(
     return arr;
 }
 
-export function Union<C extends CodecLike, CS extends CodecLike[]>(
+type Unionize<T extends any[]> = T[number];
+
+type UnionOutput<T extends any[]> = Unionize<
+    {
+        [K in keyof T]: Codec.Output<T[K]>;
+    }
+>;
+
+type UnionParsed<T extends any[]> = Unionize<
+    {
+        [K in keyof T]: Codec.Parsed<T[K]>;
+    }
+>;
+
+type UnionSerialized<T extends any[]> = Unionize<
+    {
+        [K in keyof T]: Codec.Serialized<T[K]>;
+    }
+>;
+
+export class UnionCodec<Cs extends Codec.Any[]> extends Codec<
+    unknown,
+    UnionOutput<Cs>,
+    UnionParsed<Cs>,
+    UnionSerialized<Cs>,
+    Cs
+> {
+    constructor(codecs: Cs) {
+        super(
+            'Union',
+            codecs,
+            input => {
+                const [codec, ...codecs] = this.args;
+                let i = 0;
+                let r = codec.parse(input);
+                while (true) {
+                    if (!r.isError || i >= codecs.length) {
+                        break;
+                    }
+                    r = codecs[i].parse(input);
+                    i += 1;
+                }
+                return r;
+            },
+            parsed => {
+                // Try serializing with each codec until one returns a non-error
+                // result
+                const [codec, ...codecs] = this.args;
+                return until(
+                    [codec, ...codecs],
+                    x => x.serialize(parsed),
+                    x => !x.isError,
+                ).slice(-1)[0];
+            },
+        );
+    }
+}
+
+export function Union<C extends Codec.Any, CS extends Codec.Any[]>(
     codec: C,
     ...codecs: CS
 ): UnionCodec<Cons<C, CS>> {
-    type T = Cons<C, CS>;
-    type O = UnionOutput<T>;
-    type S = UnionSerialized<T>;
-
-    return new GenericCodec<unknown, O, S, T>(
-        'Union',
-        [codec, ...codecs] as T,
-        unk => {
-            let i = 0;
-            let r = codec.parse(unk);
-            while (true) {
-                if (!r.isError || i >= codecs.length) {
-                    break;
-                }
-                r = codecs[i].parse(unk);
-                i += 1;
-            }
-            return r;
-        },
-        o => {
-            // Try serializing with each codec until one returns a non-error
-            // result
-            return until(
-                [codec, ...codecs],
-                x => x.serialize(o),
-                x => !x.isError,
-            ).slice(-1)[0];
-        },
-    );
+    return new UnionCodec([codec, ...codecs]);
 }

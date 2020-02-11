@@ -1,43 +1,30 @@
-/**
- * JSON schema for serializing codecs
- */
-
 export interface SchemaDocument {
     type: 'SchemaDocument';
     definitions: Definition[];
 }
 
-export type Definition = CodecDefinition;
-
-export interface CodecDefinition {
-    type: 'CodecDefinition';
+export interface Definition {
+    type: 'Definition';
     name: string;
+    params?: ParamList;
     reference: Reference;
 }
 
-export type Reference = CodecReference | FactoryReference;
+export type ParamList = ('Literal' | 'Reference')[];
 
-export interface CodecReference {
-    type: 'CodecReference';
+export interface Reference {
+    type: 'Reference';
     name: string;
+    args?: ArgList;
 }
 
-export type FactoryReference = GenericFactoryReference | RecordFactoryReference;
-
-export interface GenericFactoryReference {
-    type: 'GenericFactoryReference';
-    name: string;
-    args: (Reference | Literal)[];
-}
-
-export interface RecordFactoryReference {
-    type: 'RecordFactoryReference';
-    fields: { [field: string]: Reference };
-}
+export type ArgList = Arg[] | { [arg: string]: Arg };
+export type Arg = Literal | Reference | Param;
+export type Param = { type: 'Param'; param: number };
 
 export interface Literal {
     type: 'Literal';
-    codec: string;
+    kind: string;
     value: any;
     const?: boolean;
 }
