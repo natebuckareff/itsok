@@ -17,6 +17,5 @@ export * from './Result';
 export * from './SchemaBuilder';
 export * from './SchemaDocument';
 export * from './Time';
-export * from './URIEncoded';
 export * from './Union';
 export * from './codegen';
